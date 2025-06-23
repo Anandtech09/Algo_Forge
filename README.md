@@ -37,24 +37,26 @@ Algo-Forge is a web application designed to help developers practice and master 
    ```bash
    git clone https://github.com/Anandtech09/Algo_Forge.git
    cd Algo-Forge
-Install dependencies:
-bash
-npm install
-Start the development server:
-bash
-npm start
-Open the application in your browser at http://localhost:3000.
-Project Structure
-algo-forge/
-├── src/
-│   ├── components/
-│   │   └── ProblemDialog.tsx  # React component for displaying problem details
-│   ├── data/
-│   │   └── problems.json      # JSON file containing problem definitions
-├── README.md                  # Project documentation
-├── LICENSE                    # MIT License
-├── package.json               # Project dependencies and scripts
+   ```
+2. Install dependencies:
+    ```bash
+    npm install
+    ```
+Open the application in your browser at http://localhost:8080.
 
+### Project Structure
+
+    ```bash
+    algo-forge/
+    ├── src/
+    │   ├── components/
+    │   │   └── ProblemDialog.tsx  # React component for displaying problem details
+    │   ├── data/
+    │   │   └── problems.json      # JSON file containing problem definitions
+    ├── README.md                  # Project documentation
+    ├── LICENSE                    # MIT License
+    ├── package.json               # Project dependencies and scripts
+    ```
 ### Contributing
 Contributions are welcome! Please follow these steps:
 Fork the repository.
