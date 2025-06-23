@@ -8,7 +8,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: ["algo-forge.onrender.com","algo-forge-ashy.vercel.app", "localhost"],
   },
   plugins: [
     react(),
