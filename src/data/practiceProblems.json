@@ -1,0 +1,374 @@
+
+{
+  "problems": [
+    {
+      "id": "two-sum",
+      "title": "Two Sum",
+      "difficulty": "Easy",
+      "category": "Array",
+      "description": "Given an array of integers and a target sum, return indices of two numbers that add up to the target.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "reverse-linked-list",
+      "title": "Reverse Linked List",
+      "difficulty": "Easy",
+      "category": "Linked List",
+      "description": "Reverse a singly linked list iteratively and recursively.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "valid-parentheses",
+      "title": "Valid Parentheses",
+      "difficulty": "Easy",
+      "category": "Stack",
+      "description": "Given a string containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "maximum-subarray",
+      "title": "Maximum Subarray",
+      "difficulty": "Medium",
+      "category": "Dynamic Programming",
+      "description": "Find the contiguous subarray with the largest sum (Kadane's Algorithm).",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "binary-tree-inorder",
+      "title": "Binary Tree Inorder Traversal",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Given the root of a binary tree, return the inorder traversal of its nodes' values.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "merge-intervals",
+      "title": "Merge Intervals",
+      "difficulty": "Medium",
+      "category": "Array",
+      "description": "Given an array of intervals, merge all overlapping intervals.",
+      "timeEstimate": "30 min",
+      "points": 25
+    },
+    {
+      "id": "longest-palindrome",
+      "title": "Longest Palindromic Substring",
+      "difficulty": "Medium",
+      "category": "String",
+      "description": "Given a string, find the longest palindromic substring.",
+      "timeEstimate": "35 min",
+      "points": 30
+    },
+    {
+      "id": "word-ladder",
+      "title": "Word Ladder",
+      "difficulty": "Hard",
+      "category": "Graph",
+      "description": "Given two words and a dictionary, find the length of shortest transformation sequence.",
+      "timeEstimate": "45 min",
+      "points": 40
+    },
+    {
+      "id": "climbing-stairs",
+      "title": "Climbing Stairs",
+      "difficulty": "Easy",
+      "category": "Dynamic Programming",
+      "description": "You're climbing a staircase. It takes n steps to reach the top. Each time you can climb 1 or 2 steps.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "best-time-to-buy-sell-stock",
+      "title": "Best Time to Buy and Sell Stock",
+      "difficulty": "Easy",
+      "category": "Array",
+      "description": "Find the maximum profit you can achieve from buying and selling stock once.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "container-with-most-water",
+      "title": "Container With Most Water",
+      "difficulty": "Medium",
+      "category": "Two Pointers",
+      "description": "Given n non-negative integers representing heights, find the container that holds the most water.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "3sum",
+      "title": "3Sum",
+      "difficulty": "Medium",
+      "category": "Array",
+      "description": "Given an integer array, return all unique triplets that sum to zero.",
+      "timeEstimate": "35 min",
+      "points": 25
+    },
+    {
+      "id": "remove-nth-node",
+      "title": "Remove Nth Node From End of List",
+      "difficulty": "Medium",
+      "category": "Linked List",
+      "description": "Remove the nth node from the end of a linked list and return its head.",
+      "timeEstimate": "20 min",
+      "points": 20
+    },
+    {
+      "id": "valid-sudoku",
+      "title": "Valid Sudoku",
+      "difficulty": "Medium",
+      "category": "Hash Table",
+      "description": "Determine if a 9x9 Sudoku board is valid.",
+      "timeEstimate": "30 min",
+      "points": 25
+    },
+    {
+      "id": "search-rotated-array",
+      "title": "Search in Rotated Sorted Array",
+      "difficulty": "Medium",
+      "category": "Binary Search",
+      "description": "Search for a target value in a rotated sorted array.",
+      "timeEstimate": "25 min",
+      "points": 25
+    },
+    {
+      "id": "combination-sum",
+      "title": "Combination Sum",
+      "difficulty": "Medium",
+      "category": "Backtracking",
+      "description": "Find all unique combinations where candidate numbers sum to a target.",
+      "timeEstimate": "30 min",
+      "points": 25
+    },
+    {
+      "id": "permutations",
+      "title": "Permutations",
+      "difficulty": "Medium",
+      "category": "Backtracking",
+      "description": "Generate all possible permutations of a given array of distinct integers.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "rotate-image",
+      "title": "Rotate Image",
+      "difficulty": "Medium",
+      "category": "Array",
+      "description": "Rotate a 2D matrix by 90 degrees clockwise in-place.",
+      "timeEstimate": "20 min",
+      "points": 20
+    },
+    {
+      "id": "group-anagrams",
+      "title": "Group Anagrams",
+      "difficulty": "Medium",
+      "category": "Hash Table",
+      "description": "Group strings that are anagrams of each other.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "maximum-depth-binary-tree",
+      "title": "Maximum Depth of Binary Tree",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Find the maximum depth of a binary tree.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "same-tree",
+      "title": "Same Tree",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Check if two binary trees are the same.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "symmetric-tree",
+      "title": "Symmetric Tree",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Check whether a binary tree is a mirror of itself.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "path-sum",
+      "title": "Path Sum",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Determine if the tree has a root-to-leaf path with a given sum.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "minimum-depth-binary-tree",
+      "title": "Minimum Depth of Binary Tree",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Find the minimum depth of a binary tree.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "balanced-binary-tree",
+      "title": "Balanced Binary Tree",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Check if a binary tree is height-balanced.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "convert-sorted-array-to-b st",
+      "title": "Convert Sorted Array to Binary Search Tree",
+      "difficulty": "Easy",
+      "category": "Tree",
+      "description": "Convert a sorted array to a height-balanced BST.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "pascal-triangle",
+      "title": "Pascal's Triangle",
+      "difficulty": "Easy",
+      "category": "Array",
+      "description": "Generate the first numRows of Pascal's triangle.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "single-number",
+      "title": "Single Number",
+      "difficulty": "Easy",
+      "category": "Bit Manipulation",
+      "description": "Find the single number that appears only once in an array.",
+      "timeEstimate": "10 min",
+      "points": 10
+    },
+    {
+      "id": "linked-list-cycle",
+      "title": "Linked List Cycle",
+      "difficulty": "Easy",
+      "category": "Linked List",
+      "description": "Determine if a linked list has a cycle.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "min-stack",
+      "title": "Min Stack",
+      "difficulty": "Medium",
+      "category": "Stack",
+      "description": "Design a stack that supports push, pop, top, and retrieving minimum element.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "intersection-linked-lists",
+      "title": "Intersection of Two Linked Lists",
+      "difficulty": "Easy",
+      "category": "Linked List",
+      "description": "Find the intersection point of two linked lists.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "majority-element",
+      "title": "Majority Element",
+      "difficulty": "Easy",
+      "category": "Array",
+      "description": "Find the majority element that appears more than n/2 times.",
+      "timeEstimate": "15 min",
+      "points": 10
+    },
+    {
+      "id": "rotate-array",
+      "title": "Rotate Array",
+      "difficulty": "Medium",
+      "category": "Array",
+      "description": "Rotate an array to the right by k steps.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "reverse-bits",
+      "title": "Reverse Bits",
+      "difficulty": "Easy",
+      "category": "Bit Manipulation",
+      "description": "Reverse bits of a 32-bit unsigned integer.",
+      "timeEstimate": "20 min",
+      "points": 15
+    },
+    {
+      "id": "number-of-1-bits",
+      "title": "Number of 1 Bits",
+      "difficulty": "Easy",
+      "category": "Bit Manipulation",
+      "description": "Count the number of 1 bits in an unsigned integer.",
+      "timeEstimate": "10 min",
+      "points": 10
+    },
+    {
+      "id": "house-robber",
+      "title": "House Robber",
+      "difficulty": "Medium",
+      "category": "Dynamic Programming",
+      "description": "Determine the maximum money you can rob without robbing adjacent houses.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "binary-tree-level-order",
+      "title": "Binary Tree Level Order Traversal",
+      "difficulty": "Medium",
+      "category": "Tree",
+      "description": "Return the level order traversal of a binary tree's nodes.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "validate-binary-search-tree",
+      "title": "Validate Binary Search Tree",
+      "difficulty": "Medium",
+      "category": "Tree",
+      "description": "Determine if a binary tree is a valid binary search tree.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "kth-largest-element",
+      "title": "Kth Largest Element in an Array",
+      "difficulty": "Medium",
+      "category": "Heap",
+      "description": "Find the kth largest element in an unsorted array.",
+      "timeEstimate": "25 min",
+      "points": 20
+    },
+    {
+      "id": "course-schedule",
+      "title": "Course Schedule",
+      "difficulty": "Medium",
+      "category": "Graph",
+      "description": "Determine if you can finish all courses given prerequisites.",
+      "timeEstimate": "30 min",
+      "points": 25
+    },
+    {
+      "id": "implement-trie",
+      "title": "Implement Trie (Prefix Tree)",
+      "difficulty": "Medium",
+      "category": "Trie",
+      "description": "Implement a trie with insert, search, and startsWith methods.",
+      "timeEstimate": "30 min",
+      "points": 25
+    }
+  ]
+}
