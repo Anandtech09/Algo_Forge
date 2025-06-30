@@ -212,7 +212,7 @@ const PracticeProblems: React.FC = () => {
                 <p className="text-gray-500">Try adjusting your filters to see more problems.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[84vh] overflow-y-auto">
                 {filteredProblems.map((problem) => {
                   const isCompleted = completedProblems[problem.id];
                   return (

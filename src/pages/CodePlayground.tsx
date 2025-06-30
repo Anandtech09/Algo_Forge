@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Play, Save, Download, RotateCcw, Sparkles, Settings } from 'lucide-react';
+import { ArrowLeft, Play, Download, RotateCcw, Sparkles, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { apiService } from '@/services/api';
-import ApiKeySetup from '@/components/ApiKeySetup';
 import CodeAnalysisModal from '@/components/CodeAnalysisModal';
 import { generatePDF } from '@/utils/pdfGenerator';
 
@@ -38,8 +37,7 @@ print("Sorted array:", sorted_numbers)`);
   const [complexityAnalysis, setComplexityAnalysis] = useState<string>('');
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [apiKeysConfigured, setApiKeysConfigured] = useState<boolean>(false);
-  const [showApiKeySetup, setShowApiKeySetup] = useState<boolean>(false);
+  const [isApiKeysValid, setIsApiKeysValid] = useState<boolean>(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState<boolean>(false);
   const [detailedAnalysis, setDetailedAnalysis] = useState<string>('');
   const [isLoadingDetailedAnalysis, setIsLoadingDetailedAnalysis] = useState<boolean>(false);
@@ -146,23 +144,35 @@ def binary_search(arr, target):
 numbers = [2, 3, 4, 10, 40]
 target = 10
 print("Linear Search:", linear_search(numbers, target))
-print("Binary Search:", binary_search(numbers, target))`
+print("Binary Search:", binary_search(numbers, target))`,
+your_code: `
+#Enter your code here`,
   };
 
   const validateApiKeys = async (): Promise<boolean> => {
-    const groqKey = localStorage.getItem('groq_api_key');
-    const openRouterKey = localStorage.getItem('openrouter_api_key');
-    
+    const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+    const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+
     if (!groqKey || !openRouterKey) {
+      toast({
+        title: "Missing API Keys",
+        description: "Please set GROQ_API_KEY and OPENROUTER_API_KEY in your .env file.",
+        variant: "destructive",
+      });
       return false;
     }
 
     try {
-      apiService.setApiKeys(groqKey, openRouterKey);
+      apiService.setApiKeys(groqKey.trim(), openRouterKey.trim());
       await apiService.analyzeComplexity("print('test')");
       return true;
     } catch (error) {
       console.error('API key validation failed:', error);
+      toast({
+        title: "Invalid API Keys",
+        description: "The provided API keys are invalid. Please check your .env file.",
+        variant: "destructive",
+      });
       return false;
     }
   };
@@ -170,21 +180,17 @@ print("Binary Search:", binary_search(numbers, target))`
   useEffect(() => {
     const checkApiKeys = async () => {
       const isValid = await validateApiKeys();
-      setApiKeysConfigured(isValid);
-      if (!isValid) {
-        setShowApiKeySetup(true);
-      }
+      setIsApiKeysValid(isValid);
     };
-    
+
     checkApiKeys();
   }, []);
 
   const handleRunCode = async (): Promise<void> => {
-    if (!apiKeysConfigured) {
-      setShowApiKeySetup(true);
+    if (!isApiKeysValid) {
       toast({
         title: "API Keys Required",
-        description: "Please configure valid API keys first.",
+        description: "Please configure valid API keys in your .env file.",
         variant: "destructive",
       });
       return;
@@ -194,16 +200,16 @@ print("Binary Search:", binary_search(numbers, target))`
     setIsAnalyzing(true);
     setOutput('Running code...');
     setComplexityAnalysis('Analyzing complexity...');
-    
+
     try {
       const [executionResult, complexityResult] = await Promise.all([
         apiService.simulateCodeExecution(code),
         apiService.analyzeComplexity(code)
       ]);
-      
+
       setOutput(executionResult.output || 'No output generated.');
       setComplexityAnalysis(complexityResult);
-      
+
       if (executionResult.error) {
         setOutput(`Error: ${executionResult.error}`);
         toast({
@@ -213,13 +219,12 @@ print("Binary Search:", binary_search(numbers, target))`
         });
       }
     } catch (error) {
-      const errorMessage = 'Error occurred during code execution. Please check your API keys.';
+      const errorMessage = 'Error occurred during code execution. Please check your API keys in the .env file.';
       setOutput(errorMessage);
       setComplexityAnalysis('Error analyzing complexity.');
-      setShowApiKeySetup(true);
       toast({
         title: "Error",
-        description: "Failed to execute code. Please check your API keys.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -229,11 +234,10 @@ print("Binary Search:", binary_search(numbers, target))`
   };
 
   const handleGetDetailedAnalysis = async (): Promise<void> => {
-    if (!apiKeysConfigured) {
-      setShowApiKeySetup(true);
+    if (!isApiKeysValid) {
       toast({
         title: "API Keys Required",
-        description: "Please configure valid API keys first.",
+        description: "Please configure valid API keys in your .env file.",
         variant: "destructive",
       });
       return;
@@ -241,16 +245,15 @@ print("Binary Search:", binary_search(numbers, target))`
 
     setIsLoadingDetailedAnalysis(true);
     setShowAnalysisModal(true);
-    
+
     try {
       const analysis = await apiService.explainCodeExecution(code);
       setDetailedAnalysis(analysis);
     } catch (error) {
       setDetailedAnalysis('Error occurred while analyzing code execution.');
-      setShowApiKeySetup(true);
       toast({
         title: "Error",
-        description: "Failed to get detailed analysis. Please check your API keys.",
+        description: "Failed to get detailed analysis. Please check your API keys in the .env file.",
         variant: "destructive",
       });
     } finally {
@@ -299,11 +302,6 @@ print("Binary Search:", binary_search(numbers, target))`
     }
   };
 
-  const handleApiKeysSet = () => {
-    setApiKeysConfigured(true);
-    setShowApiKeySetup(false);
-  };
-
   return (
     <ProtectedRoute message="Please log in to access the Code Playground">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -344,167 +342,154 @@ print("Binary Search:", binary_search(numbers, target))`
         </div>
 
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {showApiKeySetup ? (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <ApiKeySetup onKeysSet={handleApiKeysSet} />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
-              {/* Left Panel - Template Selection */}
-              <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-20">
-                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Settings className="h-6 w-5 mr-2" />
-                      Select Template
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Tabs defaultValue="templates" className="w-full">
-                      <TabsList className="grid w-full grid-cols-1 mb-4">
-                        <TabsTrigger value="templates">Templates</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="templates" className="space-y-3 max-h-[80vh] overflow-y-auto">
-                        {Object.entries(templates).map(([key, template]) => (
-                          <div
-                            key={key}
-                            className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md transform hover:-translate-y-1 ${
-                              code === template
-                                ? 'bg-blue-50 border-blue-500 shadow-md'
-                                : 'bg-white/80 border-gray-200 hover:bg-white'
-                            }`}
-                            onClick={() => loadTemplate(key)}
-                          >
-                            <div className="font-semibold text-gray-900">
-                              {key.charAt(0).toUpperCase() + key.slice(1)} Template
-                            </div>
-                            <div className="text-sm text-gray-600 mt-1">
-                              Pre-built code for {key} operations
-                            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
+            {/* Left Panel - Template Selection */}
+            <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-20">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Settings className="h-6 w-5 mr-2" />
+                    Select Template
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="templates" className="w-full">
+                    <TabsList className="grid w-full grid-cols-1 mb-4">
+                      <TabsTrigger value="templates">Templates</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="templates" className="space-y-3 max-h-[80vh] overflow-y-auto">
+                      {Object.entries(templates).map(([key, template]) => (
+                        <div
+                          key={key}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md transform hover:-translate-y-1 ${
+                            code === template
+                              ? 'bg-blue-50 border-blue-500 shadow-md'
+                              : 'bg-white/80 border-gray-200 hover:bg-white'
+                          }`}
+                          onClick={() => loadTemplate(key)}
+                        >
+                          <div className="font-semibold text-gray-900">
+                            {key.charAt(0).toUpperCase() + key.slice(1)} Template
                           </div>
-                        ))}
+                          <div className="text-sm text-gray-600 mt-1">
+                            Pre-built code for {key} operations
+                          </div>
+                        </div>
+                      ))}
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+
+              {/* Quick Help */}
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Quick Help
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm m-1 space-y-2">
+                  <div><strong>Ctrl + Enter:</strong> Run code</div>
+                  <div><strong>AI Explain:</strong> Detailed analysis</div>
+                  <div><strong>Download:</strong> Export as PDF</div>
+                  <div><strong>Python 3.9:</strong> AI Simulated</div>
+                  {!isApiKeysValid && (
+                    <div className="text-orange-600 font-medium">
+                      ⚠️ API Keys needed in .env file
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Panel - Controls, Editor, and Console */}
+            <div id="playground-container" className="lg:col-span-7">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                <CardHeader>
+                  <div className="flex flex-wrap items-center justify-between sm:flex-nowrap">
+                    <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                      <Button onClick={handleRunCode} disabled={!isApiKeysValid || isRunning}>
+                        <Play className="h-4 w-4 mr-2" />
+                        {isRunning ? 'Running...' : 'Run Code'}
+                      </Button>
+                      <Button
+                        onClick={handleGetDetailedAnalysis}
+                        disabled={!isApiKeysValid}
+                        variant="outline"
+                        className="sm:ml-2"
+                      >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        AI Explain
+                      </Button>
+                    </div>
+                    <div className="flex mt-2 sm:mt-0 gap-2 flex-wrap sm:flex-nowrap">
+                      <Button variant="outline" onClick={handleReset}>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reset
+                      </Button>
+                      <Button variant="outline" onClick={handleDownload}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Code Editor */}
+                  <div>
+                    <label className="text-sm font-medium mb-4 block text-gray-700">
+                      Python Code Editor
+                    </label>
+                    <Textarea
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      className="w-full h-80 font-mono text-sm resize-none border rounded-lg p-4"
+                      placeholder="Write your Python code here..."
+                    />
+                  </div>
+                  {/* Output Console */}
+                  <div>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                      <TabsList>
+                        <TabsTrigger value="output">Console Output</TabsTrigger>
+                        <TabsTrigger value="complexity">Complexity Analysis</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="output" className="mt-4">
+                        <div className="bg-gray-900 text-green-400 p-4 rounded-lg h-40 overflow-auto font-mono text-sm">
+                          <pre className="whitespace-pre-wrap">
+                            {output || 'Click "Run Code" to see output here...'}
+                          </pre>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="complexity" className="mt-4">
+                        <div className="bg-blue-50 p-4 rounded-lg h-40 overflow-auto">
+                          <div className="text-blue-800 text-sm">
+                            {isAnalyzing ? (
+                              <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                                Analyzing complexity...
+                              </div>
+                            ) : complexityAnalysis ? (
+                              <div className="whitespace-pre-wrap">{complexityAnalysis}</div>
+                            ) : (
+                              <div>
+                                <strong>Complexity Analysis:</strong>
+                                <p className="mt-2">
+                                  Run your code to see time and space complexity analysis here.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </TabsContent>
                     </Tabs>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Help */}
-                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Sparkles className="h-5 w-5 mr-2" />
-                      Quick Help
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm m-1 space-y-2">
-                    <div><strong>Ctrl + Enter:</strong> Run code</div>
-                    <div><strong>AI Explain:</strong> Detailed analysis</div>
-                    <div><strong>Download:</strong> Export as PDF</div>
-                    <div><strong>Python 3.9:</strong> AI Simulated</div>
-                    {!apiKeysConfigured && (
-                      <div className="text-orange-600 font-medium">
-                        ⚠️ API Keys needed
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Panel - Controls, Editor, and Console */}
-              <div id="playground-container" className="lg:col-span-7">
-                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-                  <CardHeader>
-                    <div className="flex flex-wrap items-center justify-between sm:flex-nowrap">
-                      <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                        <Button onClick={handleRunCode} disabled={!apiKeysConfigured || isRunning}>
-                          <Play className="h-4 w-4 mr-2" />
-                          {isRunning ? 'Running...' : 'Run Code'}
-                        </Button>
-                        <Button
-                          onClick={handleGetDetailedAnalysis}
-                          disabled={!apiKeysConfigured}
-                          variant="outline"
-                          className="sm:ml-2"
-                        >
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          AI Explain
-                        </Button>
-                      </div>
-                      <div className="flex mt-2 sm:mt-0 gap-2 flex-wrap sm:flex-nowrap">
-                        <Button variant="outline" onClick={handleReset}>
-                          <RotateCcw className="h-4 w-4 mr-2" />
-                          Reset
-                        </Button>
-                        <Button variant="outline" onClick={handleDownload}>
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowApiKeySetup(true)}
-                          className="text-orange-600 border-orange-600 hover:bg-orange-50 sm:ml-2"
-                        >
-                          Configure API Keys
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Code Editor */}
-                    <div>
-                      <label className="text-sm font-medium mb-4 block text-gray-700">
-                        Python Code Editor
-                      </label>
-                      <Textarea
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        onKeyDown={handleKeyPress}
-                        className="w-full h-80 font-mono text-sm resize-none border rounded-lg p-4"
-                        placeholder="Write your Python code here..."
-                      />
-                    </div>
-                    {/* Output Console */}
-                    <div>
-                      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList>
-                          <TabsTrigger value="output">Console Output</TabsTrigger>
-                          <TabsTrigger value="complexity">Complexity Analysis</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="output" className="mt-4">
-                          <div className="bg-gray-900 text-green-400 p-4 rounded-lg h-40 overflow-auto font-mono text-sm">
-                            <pre className="whitespace-pre-wrap">
-                              {output || 'Click "Run Code" to see output here...'}
-                            </pre>
-                          </div>
-                        </TabsContent>
-                        <TabsContent value="complexity" className="mt-4">
-                          <div className="bg-blue-50 p-4 rounded-lg h-40 overflow-auto">
-                            <div className="text-blue-800 text-sm">
-                              {isAnalyzing ? (
-                                <div className="flex items-center">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                                  Analyzing complexity...
-                                </div>
-                              ) : complexityAnalysis ? (
-                                <div className="whitespace-pre-wrap">{complexityAnalysis}</div>
-                              ) : (
-                                <div>
-                                  <strong>Complexity Analysis:</strong>
-                                  <p className="mt-2">
-                                    Run your code to see time and space complexity analysis here.
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          )}
+          </div>
         </div>
 
         <CodeAnalysisModal

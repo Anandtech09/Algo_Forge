@@ -1691,7 +1691,7 @@ print(f"Number of ways: {coin_change_ways(coins, amount)}")`
               </TabsList>
               
               {Object.entries(categories).map(([categoryKey, categoryAlgorithms]) => (
-                <TabsContent key={categoryKey} value={categoryKey} className="space-y-4">
+                <TabsContent key={categoryKey} value={categoryKey} className="space-y-4 max-h-[70vh] overflow-auto">
                   {categoryAlgorithms.map((algorithm) => (
                     <Card 
                       key={algorithm.id}

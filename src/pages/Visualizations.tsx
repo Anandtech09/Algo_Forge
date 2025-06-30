@@ -328,7 +328,7 @@ const Visualizations: React.FC = () => {
                     <TabsTrigger value="dynamic">Dynamic</TabsTrigger>
                   </TabsList>
                   {Object.entries(algorithmCategories).map(([categoryKey, category]) => (
-                    <TabsContent key={categoryKey} value={categoryKey} className="space-y-3 max-h-[65vh]">
+                    <TabsContent key={categoryKey} value={categoryKey} className="space-y-3 max-h-[65vh] overflow-auto">
                       {Object.entries(category.algorithms).map(([algoKey, algo]) => (
                         <div
                           key={algoKey}
