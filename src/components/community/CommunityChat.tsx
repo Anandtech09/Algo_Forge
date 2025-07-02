@@ -235,7 +235,7 @@ const CommunityChat: React.FC<CommunityChatProps> = ({ topicId }) => {
       profiles: {
         username,
         full_name: userProfile?.full_name || null,
-        avatar_url: userProfile?.avatar_url || null,
+        avatar_url: user.user_metadata?.avatar_url || null,
       },
       isOptimistic: true,
       status: 'sending',
@@ -269,7 +269,7 @@ const CommunityChat: React.FC<CommunityChatProps> = ({ topicId }) => {
       setOptimisticMessages(prev =>
         prev.map(msg =>
           msg.id === tempId
-            ? { ...data, profiles: { username, full_name: userProfile?.full_name || null, avatar_url: userProfile?.avatar_url || null }, status: 'sent' }
+            ? { ...data, profiles: { username, full_name: userProfile?.full_name || null, avatar_url: user.user_metadata?.avatar_url || null }, status: 'sent' }
             : msg
         )
       );
@@ -518,7 +518,7 @@ const CommunityChat: React.FC<CommunityChatProps> = ({ topicId }) => {
                     isOptimistic ? 'opacity-70' : ''
                   }`}
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 shadow-md">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 shadow-md bg-green-500">
                     {msg.profiles?.avatar_url ? (
                       <img
                         src={msg.profiles.avatar_url}

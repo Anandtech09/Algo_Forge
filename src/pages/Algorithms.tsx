@@ -1779,15 +1779,15 @@ print(f"Number of ways: {coin_change_ways(coins, amount)}")`
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
                       <Link to="/playground">
-                        <Button>
+                        <Button className="sm:w-auto w-full">
                           <Code className="h-4 w-4 mr-2" />
                           Try in Playground
                         </Button>
                       </Link>
                       <Link to={`/visualizations?algorithm=${selectedAlgorithm.id}`}>
-                        <Button variant="outline">
+                        <Button variant="outline" className="sm:w-auto w-full">
                           <Play className="h-4 w-4 mr-2" />
                           View Visualization
                         </Button>

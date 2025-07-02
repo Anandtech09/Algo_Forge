@@ -379,6 +379,20 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
     }
   };
 
+  const getRandomColor = () => {
+    const colors = [
+      'blue',
+      'Gray',
+      'orange',
+      'Tomato',
+      'green',
+      'pink',
+      'dark',
+      'skyblue',
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
   const handleDeletePost = async (postId: string) => {
     if (!user || !isOnline) {
       if (!user) {
@@ -752,11 +766,11 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
               const isOwnPost = post.user_id === user?.id;
               
               return (
-                <Card key={post.id} className={`border-2 border-blue-200 ${post.id.startsWith('temp-') ? 'opacity-70' : ''}`}>
+                <Card key={post.id} className={`border-3 border-blue-200 ${post.id.startsWith('temp-') ? 'opacity-70' : ''}`}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between gap-2 mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-md">
+                        <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-md">
                           {post.profiles?.avatar_url ? (
                             <img 
                               src={post.profiles.avatar_url} 
@@ -838,7 +852,12 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                       {allComments.map((comment) => (
                         <div key={comment.id} className={`bg-gray-50 rounded-lg p-3 border-2 border-blue-100 ${comment.id.startsWith('temp-') ? 'opacity-70' : ''}`}>
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-green-400 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
+                            <div
+                              style={{
+                                backgroundColor: getRandomColor(),
+                              }}
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs shadow-sm"
+                            >
                               {comment.profiles?.avatar_url ? (
                                 <img 
                                   src={comment.profiles.avatar_url} 
