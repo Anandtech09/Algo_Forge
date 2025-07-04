@@ -7,13 +7,42 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { apiService } from '@/services/api';
+import axios from 'axios';
 import CodeAnalysisModal from '@/components/CodeAnalysisModal';
 import { generatePDF } from '@/utils/pdfGenerator';
 
 interface CodeTemplate {
   [key: string]: string;
 }
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+console.log(import.meta.env.VITE_API_BASE_URL);
+const apiService = {
+  simulateCodeExecution: async (code: string) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/execute`, { code });
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to execute code');
+    }
+  },
+  analyzeComplexity: async (code: string) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/analyze`, { code });
+      return response.data.analysis;
+    } catch (error) {
+      throw new Error('Failed to analyze complexity');
+    }
+  },
+  explainCodeExecution: async (code: string) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/explain`, { code });
+      return response.data.explanation;
+    } catch (error) {
+      throw new Error('Failed to get detailed analysis');
+    }
+  },
+};
 
 const CodePlayground: React.FC = () => {
   const [code, setCode] = useState<string>(`# Welcome to DSA Python Playground!
@@ -37,7 +66,7 @@ print("Sorted array:", sorted_numbers)`);
   const [complexityAnalysis, setComplexityAnalysis] = useState<string>('');
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [isApiKeysValid, setIsApiKeysValid] = useState<boolean>(false);
+  const [isApiAvailable, setIsApiAvailable] = useState<boolean>(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState<boolean>(false);
   const [detailedAnalysis, setDetailedAnalysis] = useState<string>('');
   const [isLoadingDetailedAnalysis, setIsLoadingDetailedAnalysis] = useState<boolean>(false);
@@ -145,32 +174,19 @@ numbers = [2, 3, 4, 10, 40]
 target = 10
 print("Linear Search:", linear_search(numbers, target))
 print("Binary Search:", binary_search(numbers, target))`,
-your_code: `
+    your_code: `
 #Enter your code here`,
   };
 
-  const validateApiKeys = async (): Promise<boolean> => {
-    const groqKey = import.meta.env.VITE_GROQ_API_KEY;
-    const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-
-    if (!groqKey || !openRouterKey) {
-      toast({
-        title: "Missing API Keys",
-        description: "Please set GROQ_API_KEY and OPENROUTER_API_KEY in your .env file.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
+  const checkApiAvailability = async (): Promise<boolean> => {
     try {
-      apiService.setApiKeys(groqKey.trim(), openRouterKey.trim());
-      await apiService.analyzeComplexity("print('test')");
+      await axios.get(`${API_BASE_URL}/health`);
       return true;
     } catch (error) {
-      console.error('API key validation failed:', error);
+      console.error('API health check failed:', error);
       toast({
-        title: "Invalid API Keys",
-        description: "The provided API keys are invalid. Please check your .env file.",
+        title: "API Unavailable",
+        description: "Unable to connect to the backend server. Please ensure the server is running.",
         variant: "destructive",
       });
       return false;
@@ -178,19 +194,18 @@ your_code: `
   };
 
   useEffect(() => {
-    const checkApiKeys = async () => {
-      const isValid = await validateApiKeys();
-      setIsApiKeysValid(isValid);
+    const checkApi = async () => {
+      const isAvailable = await checkApiAvailability();
+      setIsApiAvailable(isAvailable);
     };
-
-    checkApiKeys();
+    checkApi();
   }, []);
 
   const handleRunCode = async (): Promise<void> => {
-    if (!isApiKeysValid) {
+    if (!isApiAvailable) {
       toast({
-        title: "API Keys Required",
-        description: "Please configure valid API keys in your .env file.",
+        title: "Backend Unavailable",
+        description: "Please ensure the backend server is running.",
         variant: "destructive",
       });
       return;
@@ -204,7 +219,7 @@ your_code: `
     try {
       const [executionResult, complexityResult] = await Promise.all([
         apiService.simulateCodeExecution(code),
-        apiService.analyzeComplexity(code)
+        apiService.analyzeComplexity(code),
       ]);
 
       setOutput(executionResult.output || 'No output generated.');
@@ -219,7 +234,7 @@ your_code: `
         });
       }
     } catch (error) {
-      const errorMessage = 'Error occurred during code execution. Please check your API keys in the .env file.';
+      const errorMessage = 'Error occurred during code execution. Please check the backend server.';
       setOutput(errorMessage);
       setComplexityAnalysis('Error analyzing complexity.');
       toast({
@@ -234,10 +249,10 @@ your_code: `
   };
 
   const handleGetDetailedAnalysis = async (): Promise<void> => {
-    if (!isApiKeysValid) {
+    if (!isApiAvailable) {
       toast({
-        title: "API Keys Required",
-        description: "Please configure valid API keys in your .env file.",
+        title: "Backend Unavailable",
+        description: "Please ensure the backend server is running.",
         variant: "destructive",
       });
       return;
@@ -253,7 +268,7 @@ your_code: `
       setDetailedAnalysis('Error occurred while analyzing code execution.');
       toast({
         title: "Error",
-        description: "Failed to get detailed analysis. Please check your API keys in the .env file.",
+        description: "Failed to get detailed analysis. Please check the backend server.",
         variant: "destructive",
       });
     } finally {
@@ -394,9 +409,9 @@ your_code: `
                   <div><strong>AI Explain:</strong> Detailed analysis</div>
                   <div><strong>Download:</strong> Export as PDF</div>
                   <div><strong>Python 3.9:</strong> AI Simulated</div>
-                  {!isApiKeysValid && (
+                  {!isApiAvailable && (
                     <div className="text-orange-600 font-medium">
-                      ⚠️ API Keys needed in .env file
+                      ⚠️ Backend server not running
                     </div>
                   )}
                 </CardContent>
@@ -409,13 +424,13 @@ your_code: `
                 <CardHeader>
                   <div className="flex flex-wrap items-center justify-between sm:flex-nowrap">
                     <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                      <Button onClick={handleRunCode} disabled={!isApiKeysValid || isRunning}>
+                      <Button onClick={handleRunCode} disabled={!isApiAvailable || isRunning}>
                         <Play className="h-4 w-4 mr-2" />
                         {isRunning ? 'Running...' : 'Run Code'}
                       </Button>
                       <Button
                         onClick={handleGetDetailedAnalysis}
-                        disabled={!isApiKeysValid}
+                        disabled={!isApiAvailable}
                         variant="outline"
                         className="sm:ml-2"
                       >

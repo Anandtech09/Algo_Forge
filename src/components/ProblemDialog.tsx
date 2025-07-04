@@ -1,10 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Code, Eye, EyeOff, X, Clock, Trophy } from 'lucide-react';
+import { Code, Eye, EyeOff, Clock, Trophy, Play, XCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 interface Problem {
   id: string;
@@ -18,27 +19,37 @@ interface Problem {
 
 interface ProblemDialogProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (open: boolean) => void;
   problem: Problem | null;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const ProblemDialog: React.FC<ProblemDialogProps> = ({ isOpen, onClose, problem }) => {
   const [showSolution, setShowSolution] = useState(false);
+  const [userCode, setUserCode] = useState<string>('');
+  const [output, setOutput] = useState<string>('');
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const codeEditorRef = useRef<HTMLDivElement>(null);
 
   if (!problem) return null;
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Easy': return 'bg-green-100 text-green-800 border-green-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Hard': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'Easy':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Hard':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getSolutionCode = (problemId: string) => {
-  const solutions: { [key: string]: string } = {
-    'two-sum': `def two_sum(nums, target):
+    const solutions: { [key: string]: string } = {
+      'two-sum': `def two_sum(nums, target):
     num_map = {}
     for i, num in enumerate(nums):
         complement = target - num
@@ -53,7 +64,7 @@ target = 9
 result = two_sum(nums, target)
 print(result)  # Output: [0, 1]`,
 
-    'reverse-linked-list': `class ListNode:
+      'reverse-linked-list': `class ListNode:
     def __init__(self, val=0, next=None):
         self.val = val
         self.next = next
@@ -81,7 +92,7 @@ def reverse_list_recursive(head):
     
     return reversed_head`,
 
-    'valid-parentheses': `def is_valid(s):
+      'valid-parentheses': `def is_valid(s):
     stack = []
     mapping = {')': '(', '}': '{', ']': '['}
     
@@ -100,7 +111,7 @@ print(is_valid("()"))     # True
 print(is_valid("()[]{}")) # True
 print(is_valid("(]"))     # False`,
 
-    'maximum-subarray': `def max_subarray(nums):
+      'maximum-subarray': `def max_subarray(nums):
     max_sum = nums[0]
     current_sum = nums[0]
     
@@ -115,7 +126,7 @@ nums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]
 result = max_subarray(nums)
 print(result)  # Output: 6 (subarray [4, -1, 2, 1])`,
 
-    'binary-tree-inorder': `class TreeNode:
+      'binary-tree-inorder': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -150,7 +161,7 @@ def inorder_traversal_iterative(root):
     
     return result`,
 
-    'merge-intervals': `def merge(intervals):
+      'merge-intervals': `def merge(intervals):
     if not intervals:
         return []
     
@@ -172,7 +183,7 @@ intervals = [[1,3],[2,6],[8,10],[15,18]]
 result = merge(intervals)
 print(result)  # Output: [[1,6],[8,10],[15,18]]`,
 
-    'longest-palindrome': `def longest_palindrome(s):
+      'longest-palindrome': `def longest_palindrome(s):
     def expand_around_center(left, right):
         while left >= 0 and right < len(s) and s[left] == s[right]:
             left -= 1
@@ -198,7 +209,7 @@ s = "babad"
 result = longest_palindrome(s)
 print(result)  # Output: "bab" or "aba"`,
 
-    'word-ladder': `from collections import deque
+      'word-ladder': `from collections import deque
 
 def ladder_length(beginWord, endWord, wordList):
     if endWord not in wordList:
@@ -231,7 +242,7 @@ wordList = ["hot","dot","dog","lot","log","cog"]
 result = ladder_length(beginWord, endWord, wordList)
 print(result)  # Output: 5`,
 
-    'climbing-stairs': `def climb_stairs(n):
+      'climbing-stairs': `def climb_stairs(n):
     if n <= 2:
         return n
     dp = [0] * (n + 1)
@@ -244,7 +255,7 @@ print(result)  # Output: 5`,
 n = 3
 print(climb_stairs(n))  # Output: 3`,
 
-    'best-time-to-buy-sell-stock': `def max_profit(prices):
+      'best-time-to-buy-sell-stock': `def max_profit(prices):
     min_price = float('inf')
     max_profit = 0
     for price in prices:
@@ -256,14 +267,14 @@ print(climb_stairs(n))  # Output: 3`,
 prices = [7,1,5,3,6,4]
 print(max_profit(prices))  # Output: 5`,
 
-    'container-with-most-water': `def max_area(height):
+      'container-with-most-water': `def max_area(height):
     left, right = 0, len(height) - 1
     max_water = 0
     while left < right:
         width = right - left
         max_water = max(max_water, min(height[left], height[right]) * width)
         if height[left] < height[right]:
-            left +=- 1
+            left += 1
         else:
             right -= 1
     return max_water
@@ -272,7 +283,7 @@ print(max_profit(prices))  # Output: 5`,
 height = [1,8,6,2,5,4,8,3,7]
 print(max_area(height))  # Output: 49`,
 
-    '3sum': `def three_sum(nums):
+      '3sum': `def three_sum(nums):
     nums.sort()
     result = []
     for i in range(len(nums) - 2):
@@ -299,7 +310,7 @@ print(max_area(height))  # Output: 49`,
 nums = [-1,0,1,2,-1,-4]
 print(three_sum(nums))  # Output: [[-1,-1,2],[-1,0,1]]`,
 
-    'remove-nth-node': `class ListNode:
+      'remove-nth-node': `class ListNode:
     def __init__(self, val=0, next=None):
         self.val = val
         self.next = next
@@ -316,19 +327,20 @@ def remove_nth_from_end(head, n):
     second.next = second.next.next
     return dummy.next`,
 
-    'valid-sudoku': `def is_valid_sudoku(board):
-    rows = [setಸ] * 9
-    cols = [{}] * 9
-    boxes = [{}] * 9
+      'valid-sudoku': `def is_valid_sudoku(board):
+    rows = [set() for _ in range(9)]
+    cols = [set() for _ in range(9)]
+    boxes = [set() for _ in range(9)]
     for i in range(9):
         for j in range(9):
             if board[i][j] != '.':
                 num = board[i][j]
-                if num in rows[i] or num in cols[j] or num in boxes[i//3*3 + j//3]:
+                box_index = (i // 3) * 3 + j // 3
+                if num in rows[i] or num in cols[j] or num in boxes[box_index]:
                     return False
                 rows[i].add(num)
                 cols[j].add(num)
-                boxes[i//3*3 + j//3].add(num)
+                boxes[box_index].add(num)
     return True
 
 # Example usage
@@ -345,7 +357,7 @@ board = [
 ]
 print(is_valid_sudoku(board))  # Output: True`,
 
-    'search-rotated-array': `def search(nums, target):
+      'search-rotated-array': `def search(nums, target):
     left, right = 0, len(nums) - 1
     while left <= right:
         mid = (left + right) // 2
@@ -368,7 +380,7 @@ nums = [4,5,6,7,0,1,2]
 target = 0
 print(search(nums, target))  # Output: 4`,
 
-    'combination-sum': `def combination_sum(candidates, target):
+      'combination-sum': `def combination_sum(candidates, target):
     result = []
     def backtrack(remain, curr, start):
         if remain == 0:
@@ -389,7 +401,7 @@ candidates = [2,3,6,7]
 target = 7
 print(combination_sum(candidates, target))  # Output: [[2,2,3],[7]]`,
 
-    'permutations': `def permute(nums):
+      'permutations': `def permute(nums):
     result = []
     def backtrack(nums, curr):
         if len(curr) == len(nums):
@@ -407,7 +419,7 @@ print(combination_sum(candidates, target))  # Output: [[2,2,3],[7]]`,
 nums = [1,2,3]
 print(permute(nums))  # Output: [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]`,
 
-    'rotate-image': `def rotate(matrix):
+      'rotate-image': `def rotate(matrix):
     n = len(matrix)
     for i in range(n):
         for j in range(i, n):
@@ -420,7 +432,7 @@ matrix = [[1,2,3],[4,5,6],[7,8,9]]
 rotate(matrix)
 print(matrix)  # Output: [[7,4,1],[8,5,2],[9,6,3]]`,
 
-    'group-anagrams': `from collections import defaultdict
+      'group-anagrams': `from collections import defaultdict
 
 def group_anagrams(strs):
     anagrams = defaultdict(list)
@@ -433,7 +445,7 @@ def group_anagrams(strs):
 strs = ["eat","tea","tan","ate","nat","bat"]
 print(group_anagrams(strs))  # Output: [["eat","tea","ate"],["tan","nat"],["bat"]]`,
 
-    'maximum-depth-binary-tree': `class TreeNode:
+      'maximum-depth-binary-tree': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -446,7 +458,7 @@ def max_depth(root):
     right_depth = max_depth(root.right)
     return max(left_depth, right_depth) + 1`,
 
-    'same-tree': `class TreeNode:
+      'same-tree': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -459,7 +471,7 @@ def is_same_tree(p, q):
         return False
     return p.val == q.val and is_same_tree(p.left, q.left) and is_same_tree(p.right, q.right)`,
 
-    'symmetric-tree': `class TreeNode:
+      'symmetric-tree': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -476,7 +488,7 @@ def is_symmetric(root):
                 is_mirror(left.right, right.left))
     return not root or is_mirror(root.left, root.right)`,
 
-    'path-sum': `class TreeNode:
+      'path-sum': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -490,7 +502,7 @@ def has_path_sum(root, target_sum):
     return (has_path_sum(root.left, target_sum - root.val) or 
             has_path_sum(root.right, target_sum - root.val))`,
 
-    'minimum-depth-binary-tree': `class TreeNode:
+      'minimum-depth-binary-tree': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -507,7 +519,7 @@ def min_depth(root):
         return min_depth(root.left) + 1
     return min(min_depth(root.left), min_depth(root.right)) + 1`,
 
-    'balanced-binary-tree': `class TreeNode:
+      'balanced-binary-tree': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -528,7 +540,7 @@ def is_balanced(root):
         return max(left_height, right_height) + 1
     return check_height(root) != -1`,
 
-    'convert-sorted-array-to-bst': `class TreeNode:
+      'convert-sorted-array-to-bst': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -543,7 +555,7 @@ def sorted_array_to_bst(nums):
     root.right = sorted_array_to_bst(nums[mid + 1:])
     return root`,
 
-    'pascal-triangle': `def generate(num_rows):
+      'pascal-triangle': `def generate(num_rows):
     if num_rows == 0:
         return []
     triangle = [[1]]
@@ -560,7 +572,7 @@ def sorted_array_to_bst(nums):
 num_rows = 5
 print(generate(num_rows))  # Output: [[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]`,
 
-    'single-number': `def single_number(nums):
+      'single-number': `def single_number(nums):
     result = 0
     for num in nums:
         result ^= num
@@ -570,7 +582,7 @@ print(generate(num_rows))  # Output: [[1],[1,1],[1,2,1],[1,3,3,1],[1,4,6,4,1]]`,
 nums = [4,1,2,1,2]
 print(single_number(nums))  # Output: 4`,
 
-    'linked-list-cycle': `class ListNode:
+      'linked-list-cycle': `class ListNode:
     def __init__(self, x):
         self.val = x
         self.next = None
@@ -587,7 +599,7 @@ def has_cycle(head):
         fast = fast.next.next
     return True`,
 
-    'min-stack': `class MinStack:
+      'min-stack': `class MinStack:
     def __init__(self):
         self.stack = []
         self.min_stack = []
@@ -607,7 +619,7 @@ def has_cycle(head):
     def get_min(self):
         return self.min_stack[-1]`,
 
-    'intersection-linked-lists': `class ListNode:
+      'intersection-linked-lists': `class ListNode:
     def __init__(self, x):
         self.val = x
         self.next = None
@@ -621,7 +633,7 @@ def get_intersection_node(headA, headB):
         b = b.next if b else headA
     return a`,
 
-    'majority-element': `def majority_element(nums):
+      'majority-element': `def majority_element(nums):
     count = 0
     candidate = None
     for num in nums:
@@ -634,7 +646,7 @@ def get_intersection_node(headA, headB):
 nums = [2,2,1,1,1,2,2]
 print(majority_element(nums))  # Output: 2`,
 
-    'rotate-array': `def rotate(nums, k):
+      'rotate-array': `def rotate(nums, k):
     k = k % len(nums)
     def reverse(start, end):
         while start < end:
@@ -651,7 +663,7 @@ k = 3
 rotate(nums, k)
 print(nums)  # Output: [5,6,7,1,2,3,4]`,
 
-    'reverse-bits': `def reverse_bits(n):
+      'reverse-bits': `def reverse_bits(n):
     result = 0
     for _ in range(32):
         result = (result << 1) | (n & 1)
@@ -662,7 +674,7 @@ print(nums)  # Output: [5,6,7,1,2,3,4]`,
 n = 0b00000010100101000001111010011100
 print(bin(reverse_bits(n)))  # Output: 0b00111001011110000010100101000000`,
 
-    'number-of-1-bits': `def hamming_weight(n):
+      'number-of-1-bits': `def hamming_weight(n):
     count = 0
     while n:
         count += n & 1
@@ -673,7 +685,7 @@ print(bin(reverse_bits(n)))  # Output: 0b00111001011110000010100101000000`,
 n = 0b00000000000000000000000000001011
 print(hamming_weight(n))  # Output: 3`,
 
-    'house-robber': `def rob(nums):
+      'house-robber': `def rob(nums):
     if not nums:
         return 0
     if len(nums) == 1:
@@ -687,7 +699,7 @@ print(hamming_weight(n))  # Output: 3`,
 nums = [2,7,9,3,1]
 print(rob(nums))  # Output: 12`,
 
-    'binary-tree-level-order': `from collections import deque
+      'binary-tree-level-order': `from collections import deque
 
 class TreeNode:
     def __init__(self, val=0, left=None, right=None):
@@ -713,7 +725,7 @@ def level_order(root):
         result.append(current_level)
     return result`,
 
-    'validate-binary-search-tree': `class TreeNode:
+      'validate-binary-search-tree': `class TreeNode:
     def __init__(self, val=0, left=None, right=None):
         self.val = val
         self.left = left
@@ -728,7 +740,7 @@ def is_valid_bst(root):
         return validate(node.left, min_val, node.val) and validate(node.right, node.val, max_val)
     return validate(root, float('-inf'), float('inf'))`,
 
-    'kth-largest-element': `import heapq
+      'kth-largest-element': `import heapq
 
 def find_kth_largest(nums, k):
     return heapq.nlargest(k, nums)[-1]
@@ -738,7 +750,7 @@ nums = [3,2,1,5,6,4]
 k = 2
 print(find_kth_largest(nums, k))  # Output: 5`,
 
-    'course-schedule': `from collections import defaultdict, deque
+      'course-schedule': `from collections import defaultdict, deque
 
 def can_finish(num_courses, prerequisites):
     graph = defaultdict(list)
@@ -762,7 +774,7 @@ num_courses = 2
 prerequisites = [[1,0]]
 print(can_finish(num_courses, prerequisites))  # Output: True`,
 
-    'implement-trie': `class TrieNode:
+      'implement-trie': `class TrieNode:
     def __init__(self):
         self.children = {}
         self.is_end = False
@@ -794,22 +806,96 @@ class Trie:
                 return False
             node = node.children[char]
         return True`
-  };
+    };
 
-  return solutions[problemId] || `# Solution for ${problem.title} will be provided here
+    return solutions[problemId] || `# Solution for ${problem.title} will be provided here
 # This is a placeholder for the actual solution code
 def solve_problem():
     # Implementation goes here
     pass`;
-};
+  };
+
+  const handleRunCode = async (code: string): Promise<void> => {
+    setIsRunning(true);
+    setOutput('Running code...');
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/execute`, { code });
+      const { output, error } = response.data;
+
+      if (error) {
+        setOutput(`Error: ${error}`);
+        toast({
+          title: "Execution Error",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
+        setOutput(output || 'No output generated.');
+        toast({
+          title: "Code Executed",
+          description: "Code ran successfully. Check the output below.",
+        });
+      }
+    } catch (error) {
+      const errorMessage = 'Error occurred during code execution. Please check the backend server.';
+      setOutput(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const handleRunUserCode = () => {
+    handleRunCode(userCode);
+  };
+
+  const handleRunSolutionCode = () => {
+    handleRunCode(getSolutionCode(problem.id));
+  };
+
+  const handleShowSolution = () => {
+    if (!showSolution) {
+      setUserCode(getSolutionCode(problem.id));
+      if (codeEditorRef.current) {
+        codeEditorRef.current.innerText = getSolutionCode(problem.id);
+      }
+    } else {
+      setUserCode('');
+      setOutput('');
+      if (codeEditorRef.current) {
+        codeEditorRef.current.innerText = '';
+      }
+    }
+    setShowSolution(!showSolution);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey && e.key === 'Enter') {
+      e.preventDefault();
+      handleRunUserCode();
+    }
+  };
+  const handleModalClose = (open: boolean) => {
+    if (!open) {
+      setUserCode('');
+      setOutput('');
+      setShowSolution(false);
+    }
+    onClose(open);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+    <Dialog open={isOpen} onOpenChange={handleModalClose}>
+      <DialogContent className="max-w-[90vw] w-full sm:max-w-3xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <DialogTitle className="text-2xl font-bold">{problem.title}</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl font-bold">{problem.title}</DialogTitle>
               <Badge className={getDifficultyColor(problem.difficulty)}>
                 {problem.difficulty}
               </Badge>
@@ -818,7 +904,7 @@ def solve_problem():
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[70vh] pr-4">
+        <ScrollArea className="max-h-[70vh] pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <div className="space-y-6">
             {/* Problem Info */}
             <div className="bg-gray-50 rounded-lg p-4">
@@ -838,23 +924,58 @@ def solve_problem():
 
             {/* Problem Description */}
             <div>
-              <h3 className="font-semibold text-lg mb-3">Problem Description</h3>
+              <h3 className="font-semibold text-lg sm:text-xl mb-3">Problem Description</h3>
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-                <p className="text-gray-700 leading-relaxed">
-                  {problem.description}
-                </p>
+                <p className="text-gray-700 text-sm sm:text-base leading-relaxed">{problem.description}</p>
+              </div>
+            </div>
+
+            {/* Code Editor Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-lg sm:text-xl">{showSolution ? 'Solution Code' : 'Your Code'}</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRunUserCode}
+                  disabled={isRunning || !userCode.trim()}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  {isRunning ? 'Running...' : showSolution ? 'Run Solution' : 'Run Code'}
+                </Button>
+              </div>
+              <div className="bg-gray-900 rounded-lg overflow-hidden">
+                <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
+                    <span className="text-gray-300 text-sm font-mono">Python</span>
+                </div>
+                <div className="h-[30rem]">
+                    <textarea
+                    value={userCode}
+                    onChange={(e) => setUserCode(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    className="p-4 text-sm text-green-400 font-mono leading-relaxed w-full h-full bg-gray-900 border-none focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    style={{ whiteSpace: 'pre', tabSize: 4, direction: 'ltr' }}
+                    placeholder="Write your code here..."
+                    />
+                </div>
+                </div>
+              <div className="bg-gray-900 text-green-400 p-4 rounded-lg mt-4 h-20 overflow-auto font-mono text-xs sm:text-sm">
+                <pre className="whitespace-pre-wrap">
+                  {output || 'Click "Run Code" to see output here...'}
+                </pre>
               </div>
             </div>
 
             {/* Solution Section */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-lg">Solution</h3>
+                {showSolution ? null : (
+                  <h3 className="font-semibold text-lg sm:text-xl">Reference Solution</h3>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowSolution(!showSolution)}
-                  className="text-sm"
+                  onClick={handleShowSolution}
                 >
                   {showSolution ? (
                     <>
@@ -869,34 +990,25 @@ def solve_problem():
                   )}
                 </Button>
               </div>
-
               {showSolution ? (
                 <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="bg-gray-800 px-4 py-2 border-b border-gray-700">
-                    <span className="text-gray-300 text-sm font-mono">Python</span>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    <pre className="p-4 text-sm">
-                      <code className="text-green-400 font-mono leading-relaxed">
-                        {getSolutionCode(problem.id)}
-                      </code>
-                    </pre>
+                  <div className="max-h-40 overflow-y-auto">
                   </div>
                 </div>
               ) : (
                 <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <Code className="h-12 w-12 mx-auto text-gray-400 mb-3" />
                   <h4 className="text-lg font-medium text-gray-600 mb-2">Solution Hidden</h4>
-                  <p className="text-gray-500">Click "Show Solution" to reveal the answer</p>
+                  <p className="text-gray-500 text-sm">Click "Show Solution" to reveal the reference answer</p>
                 </div>
               )}
             </div>
 
             {/* Tips Section */}
             <div>
-              <h3 className="font-semibold text-lg mb-3">Tips & Hints</h3>
+              <h3 className="font-semibold text-lg sm:text-xl mb-3">Tips & Hints</h3>
               <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                <ul className="list-disc list-inside text-gray-700 text-sm sm:text-base space-y-1">
                   <li>Try to understand the problem thoroughly before coding</li>
                   <li>Think about edge cases and test your solution</li>
                   <li>Consider time and space complexity</li>
