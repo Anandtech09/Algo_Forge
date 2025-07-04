@@ -23,11 +23,11 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialogFooter
+} from '@/components/ui/alert-dialog';
 
 interface Post {
   id: string;
@@ -64,18 +64,47 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
   const [newComment, setNewComment] = useState<{ [postId: string]: string }>({});
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [optimisticPosts, setOptimisticPosts] = useState<Post[]>([]);
-  const [optimisticComments, setOptimisticComments] = useState<{ [postId: string]: any[] }>({});
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Track online status
+  const POSTS_STORAGE_KEY = `posts_${topicId}`;
+  const COMMENTS_STORAGE_KEY = `comments_${topicId}`;
+  const LIKES_STORAGE_KEY = `likes_${topicId}`;
+
+  const getStoredPosts = (): Post[] => {
+    const stored = localStorage.getItem(POSTS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const savePostsToStorage = (posts: Post[]) => {
+    localStorage.setItem(POSTS_STORAGE_KEY, JSON.stringify(posts));
+  };
+
+  const getStoredComments = (): { [postId: string]: Post['comments'] } => {
+    const stored = localStorage.getItem(COMMENTS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  };
+
+  const saveCommentsToStorage = (comments: { [postId: string]: Post['comments'] }) => {
+    localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
+  };
+
+  const getStoredLikes = (): { [postId: string]: { user_id: string }[] } => {
+    const stored = localStorage.getItem(LIKES_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  };
+
+  const saveLikesToStorage = (likes: { [postId: string]: { user_id: string }[] }) => {
+    localStorage.setItem(LIKES_STORAGE_KEY, JSON.stringify(likes));
+  };
+
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
       toast({ title: 'Online', description: 'Connected to the server.' });
+      queryClient.invalidateQueries({ queryKey: ['posts', topicId] });
     };
     const handleOffline = () => {
       setIsOnline(false);
@@ -89,9 +118,8 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [queryClient, topicId]);
 
-  // Fetch posts
   const { data: posts = [], isLoading, error } = useQuery({
     queryKey: ['posts', topicId],
     queryFn: async () => {
@@ -100,7 +128,7 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
         .select('*')
         .eq('topic_id', topicId)
         .order('created_at', { ascending: false });
-      
+
       if (postsError) {
         toast({ title: 'Error', description: 'Failed to load posts.', variant: 'destructive' });
         throw postsError;
@@ -132,24 +160,38 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                 .select('username, full_name, avatar_url')
                 .eq('id', comment.user_id)
                 .maybeSingle();
-              
+
               return {
                 ...comment,
-                profiles: commentProfileError ? null : commentProfile
+                profiles: commentProfileError ? null : commentProfile,
               };
             })
           );
-          
+
           return {
             ...post,
             likes_count: likesCount || 0,
             profiles: profileError ? null : profile,
             post_likes: likes || [],
-            comments: commentsWithProfiles
+            comments: commentsWithProfiles,
           };
         })
       );
-      
+
+      savePostsToStorage(postsWithDetails);
+      saveCommentsToStorage(
+        postsWithDetails.reduce((acc, post) => ({
+          ...acc,
+          [post.id]: post.comments,
+        }), {})
+      );
+      saveLikesToStorage(
+        postsWithDetails.reduce((acc, post) => ({
+          ...acc,
+          [post.id]: post.post_likes,
+        }), {})
+      );
+
       return postsWithDetails as Post[];
     },
     retry: 2,
@@ -157,18 +199,13 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
     staleTime: 1000,
   });
 
-  // Combine real and optimistic posts
   const allPosts = React.useMemo(() => {
-    const realPosts = posts || [];
-    const pendingOptimistic = optimisticPosts.filter(
-      optPost => !realPosts.some(post => post.id === optPost.id)
-    );
-    return [...pendingOptimistic, ...realPosts].sort(
+    const storedPosts = getStoredPosts();
+    return storedPosts.sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
-  }, [posts, optimisticPosts]);
+  }, [posts]);
 
-  // Real-time subscription
   useEffect(() => {
     if (!topicId || !isOnline) return;
 
@@ -190,13 +227,12 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
               likes_count: 0,
               profiles: profile || { username: null, full_name: null, avatar_url: null },
               post_likes: [],
-              comments: []
+              comments: [],
             };
 
-            setOptimisticPosts(prev => prev.filter(post => post.id !== payload.new.id));
-            queryClient.setQueryData(['posts', topicId], (old: Post[] | undefined) =>
-              old ? [newPost, ...old] : [newPost]
-            );
+            const updatedPosts = [newPost, ...getStoredPosts().filter(post => post.id !== payload.new.id)];
+            savePostsToStorage(updatedPosts);
+            queryClient.setQueryData(['posts', topicId], updatedPosts);
           } else if (payload.eventType === 'UPDATE') {
             const { data: profile } = await supabase
               .from('profiles')
@@ -209,16 +245,18 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
               likes_count: payload.new.likes_count || 0,
               profiles: profile || { username: null, full_name: null, avatar_url: null },
               post_likes: payload.new.post_likes || [],
-              comments: payload.new.comments || []
+              comments: payload.new.comments || [],
             };
 
-            queryClient.setQueryData(['posts', topicId], (old: Post[] | undefined) =>
-              old ? old.map(post => (post.id === payload.new.id ? updatedPost : post)) : old
+            const updatedPosts = getStoredPosts().map(post =>
+              post.id === payload.new.id ? updatedPost : post
             );
+            savePostsToStorage(updatedPosts);
+            queryClient.setQueryData(['posts', topicId], updatedPosts);
           } else if (payload.eventType === 'DELETE') {
-            queryClient.setQueryData(['posts', topicId], (old: Post[] | undefined) =>
-              old ? old.filter(post => post.id !== payload.old.id) : old
-            );
+            const updatedPosts = getStoredPosts().filter(post => post.id !== payload.old.id);
+            savePostsToStorage(updatedPosts);
+            queryClient.setQueryData(['posts', topicId], updatedPosts);
           }
         }
       )
@@ -235,33 +273,40 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
 
             const newComment = {
               ...payload.new,
-              profiles: profile || { username: null, full_name: null, avatar_url: null }
+              profiles: profile || { username: null, full_name: null, avatar_url: null },
             };
 
-            setOptimisticComments(prev => ({
-              ...prev,
-              [payload.new.post_id]: prev[payload.new.post_id]?.filter(c => c.id !== payload.new.id) || []
-            }));
+            const storedComments = getStoredComments();
+            const postComments = storedComments[payload.new.post_id] || [];
+            storedComments[payload.new.post_id] = [
+              ...postComments.filter(c => c.id !== payload.new.id),
+              newComment,
+            ];
+            saveCommentsToStorage(storedComments);
 
-            queryClient.setQueryData(['posts', topicId], (old: Post[] | undefined) => {
-              if (!old) return old;
-              return old.map(post => {
-                if (post.id === payload.new.post_id) {
-                  return { ...post, comments: [...post.comments, newComment] };
-                }
-                return post;
-              });
+            const updatedPosts = getStoredPosts().map(post => {
+              if (post.id === payload.new.post_id) {
+                return { ...post, comments: storedComments[payload.new.post_id] };
+              }
+              return post;
             });
+            savePostsToStorage(updatedPosts);
+            queryClient.setQueryData(['posts', topicId], updatedPosts);
           } else if (payload.eventType === 'DELETE') {
-            queryClient.setQueryData(['posts', topicId], (old: Post[] | undefined) => {
-              if (!old) return old;
-              return old.map(post => {
-                if (post.id === payload.old.post_id) {
-                  return { ...post, comments: post.comments.filter(c => c.id !== payload.old.id) };
-                }
-                return post;
-              });
+            const storedComments = getStoredComments();
+            storedComments[payload.old.post_id] = storedComments[payload.old.post_id]?.filter(
+              c => c.id !== payload.old.id
+            ) || [];
+            saveCommentsToStorage(storedComments);
+
+            const updatedPosts = getStoredPosts().map(post => {
+              if (post.id === payload.old.post_id) {
+                return { ...post, comments: storedComments[payload.old.post_id] };
+              }
+              return post;
             });
+            savePostsToStorage(updatedPosts);
+            queryClient.setQueryData(['posts', topicId], updatedPosts);
           }
         }
       )
@@ -296,100 +341,107 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
   };
 
   const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPost.title.trim() || !newPost.content.trim() || !user || !isOnline) {
-      if (!user) {
-        toast({ title: 'Error', description: 'Please log in to create posts.', variant: 'destructive' });
-      } else if (!isOnline) {
-        toast({ title: 'Error', description: 'You are offline. Please check your connection.', variant: 'destructive' });
-      }
-      return;
+  e.preventDefault();
+  if (!newPost.title.trim() || !newPost.content.trim() || !user || !isOnline) {
+    if (!user) {
+      toast({ title: 'Error', description: 'Please log in to create posts.', variant: 'destructive' });
+    } else if (!isOnline) {
+      toast({ title: 'Error', description: 'You are offline. Please check your connection.', variant: 'destructive' });
     }
+    return;
+  }
 
-    const tempId = `temp-${Date.now()}-${Math.random()}`;
-    let imageUrls: string[] = [];
+  const tempId = `temp-${Date.now()}-${Math.random()}`;
+  let imageUrls: string[] = [];
 
-    if (selectedImages.length > 0) {
-      for (const image of selectedImages) {
-        const fileName = `${user.id}/${Date.now()}-${image.name}`;
-        const { data, error } = await supabase.storage
+  if (selectedImages.length > 0) {
+    for (const image of selectedImages) {
+      const fileName = `${user.id}/${Date.now()}-${image.name}`;
+      const { data, error } = await supabase.storage
+        .from('post-images')
+        .upload(fileName, image);
+
+      if (!error && data) {
+        const { data: { publicUrl } } = supabase.storage
           .from('post-images')
-          .upload(fileName, image);
-
-        if (!error && data) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('post-images')
-            .getPublicUrl(fileName);
-          imageUrls.push(publicUrl);
-        } else {
-          console.error('Error uploading image:', error);
-          toast({ title: 'Error', description: 'Failed to upload image.', variant: 'destructive' });
-        }
+          .getPublicUrl(fileName);
+        imageUrls.push(publicUrl);
+      } else {
+        console.error('Error uploading image:', error);
+        toast({ title: 'Error', description: 'Failed to upload image.', variant: 'destructive' });
       }
     }
+  }
 
-    let finalContent = newPost.content.trim();
-    if (imageUrls.length > 0) {
-      finalContent += '\n\n' + imageUrls.map(url => `![Image](${url})`).join('\n');
-    }
+  let finalContent = newPost.content.trim();
+  if (imageUrls.length > 0) {
+    finalContent += '\n\n' + imageUrls.map(url => `![Image](${url})`).join('\n');
+  }
 
-    const optimisticPost: Post = {
-      id: tempId,
-      title: newPost.title.trim(),
-      content: finalContent,
-      likes_count: 0,
-      created_at: new Date().toISOString(),
-      user_id: user.id,
-      profiles: {
-        username: user.user_metadata?.username || user.email?.split('@')[0] || 'Anonymous',
-        full_name: user.user_metadata?.full_name || null,
-        avatar_url: user.user_metadata?.avatar_url || null
-      },
-      post_likes: [],
-      comments: []
-    };
-
-    setOptimisticPosts(prev => [optimisticPost, ...prev]);
-    setNewPost({ title: '', content: '' });
-    setSelectedImages([]);
-    setIsCreateDialogOpen(false);
-
-    try {
-      const { error } = await supabase
-        .from('posts')
-        .insert([{
-          topic_id: topicId,
-          user_id: user.id,
-          title: newPost.title.trim(),
-          content: finalContent
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating post:', error);
-        setOptimisticPosts(prev => prev.filter(post => post.id !== tempId));
-        toast({ title: 'Error', description: 'Failed to create post: ' + error.message, variant: 'destructive' });
-        throw error;
-      }
-
-      toast({ title: 'Success', description: 'Post created successfully.' });
-    } catch (error) {
-      setOptimisticPosts(prev => prev.filter(post => post.id !== tempId));
-    }
+  const newPostData: Post = {
+    id: tempId,
+    title: newPost.title.trim(),
+    content: finalContent,
+    likes_count: 0,
+    created_at: new Date().toISOString(),
+    user_id: user.id,
+    profiles: {
+      username: user.user_metadata?.username || user.email?.split('@')[0] || 'Anonymous',
+      full_name: user.user_metadata?.full_name || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+    },
+    post_likes: [],
+    comments: [],
   };
 
+  // Update local storage
+  const updatedPosts = [newPostData, ...getStoredPosts()];
+  savePostsToStorage(updatedPosts);
+  queryClient.setQueryData(['posts', topicId], updatedPosts);
+
+  // Clear dialog inputs
+  setNewPost({ title: '', content: '' });
+  setSelectedImages([]);
+  setIsCreateDialogOpen(false);
+
+  // Sync with Supabase in the background
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .insert([{
+        topic_id: topicId,
+        user_id: user.id,
+        title: newPost.title.trim(),
+        content: finalContent,
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating post:', error);
+      // Rollback local storage on error
+      savePostsToStorage(getStoredPosts().filter(post => post.id !== tempId));
+      queryClient.setQueryData(['posts', topicId], getStoredPosts());
+      toast({ title: 'Error', description: 'Failed to create post: ' + error.message, variant: 'destructive' });
+      throw error;
+    }
+
+    // Update local storage with real post ID
+    const realPost = {
+      ...newPostData,
+      id: data.id,
+      created_at: data.created_at,
+    };
+    savePostsToStorage(getStoredPosts().map(post => (post.id === tempId ? realPost : post)));
+    queryClient.setQueryData(['posts', topicId], getStoredPosts());
+    toast({ title: 'Success', description: 'Post created successfully.' });
+  } catch (error) {
+    console.error('Error syncing post with database:', error);
+  }
+};
+
   const getRandomColor = () => {
-    const colors = [
-      'blue',
-      'Gray',
-      'orange',
-      'Tomato',
-      'green',
-      'pink',
-      'dark',
-      'skyblue',
-    ];
+    const colors = ['blue', 'gray', 'orange', 'tomato', 'green', 'pink', 'dark', 'skyblue'];
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
@@ -403,17 +455,17 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
       return;
     }
 
-    // Store post for potential rollback
-    const postToDelete = allPosts.find(post => post.id === postId);
+    // Store post for rollback
+    const postToDelete = getStoredPosts().find(post => post.id === postId);
     if (!postToDelete) {
       console.error('Post not found for deletion:', postId);
       return;
     }
 
-    // Optimistic delete
-    queryClient.setQueryData(['posts', topicId], (oldPosts: Post[] | undefined) =>
-      oldPosts ? oldPosts.filter(post => post.id !== postId) : oldPosts
-    );
+    // Update local storage
+    const updatedPosts = getStoredPosts().filter(post => post.id !== postId);
+    savePostsToStorage(updatedPosts);
+    queryClient.setQueryData(['posts', topicId], updatedPosts);
 
     try {
       // Delete associated comments
@@ -447,20 +499,26 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
 
       if (error) {
         console.error('Error deleting post:', error, { postId, userId: user.id });
-        // Rollback optimistic delete
-        queryClient.setQueryData(['posts', topicId], (oldPosts: Post[] | undefined) =>
-          oldPosts ? [postToDelete, ...oldPosts] : [postToDelete]
-        );
+        // Rollback
+        savePostsToStorage([postToDelete, ...getStoredPosts()]);
+        queryClient.setQueryData(['posts', topicId], getStoredPosts());
         toast({ title: 'Error', description: 'Failed to delete post: ' + error.message, variant: 'destructive' });
         throw error;
       }
 
+      // Update comments and likes storage
+      const storedComments = getStoredComments();
+      delete storedComments[postId];
+      saveCommentsToStorage(storedComments);
+      const storedLikes = getStoredLikes();
+      delete storedLikes[postId];
+      saveLikesToStorage(storedLikes);
+
       toast({ title: 'Success', description: 'Post deleted successfully.' });
     } catch (error) {
-      // Ensure rollback on catch
-      queryClient.setQueryData(['posts', topicId], (oldPosts: Post[] | undefined) =>
-        oldPosts ? [postToDelete, ...oldPosts] : [postToDelete]
-      );
+      // Rollback on error
+      savePostsToStorage([postToDelete, ...getStoredPosts()]);
+      queryClient.setQueryData(['posts', topicId], getStoredPosts());
       toast({ title: 'Error', description: 'Failed to delete post.', variant: 'destructive' });
     }
   };
@@ -475,34 +533,33 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
       return;
     }
 
-    const post = allPosts.find(p => p.id === postId);
+    const post = getStoredPosts().find(p => p.id === postId);
     if (!post) return;
 
-    const isCurrentlyLiked = post.post_likes?.some(like => like.user_id === user.id) || false;
+    const storedLikes = getStoredLikes();
+    const postLikes = storedLikes[postId] || [];
+    const isCurrentlyLiked = postLikes.some(like => like.user_id === user.id);
 
-    queryClient.setQueryData(['posts', topicId], (oldPosts: Post[] | undefined) => {
-      if (!oldPosts) return oldPosts;
-      
-      return oldPosts.map(p => {
-        if (p.id === postId) {
-          if (isCurrentlyLiked) {
-            return {
-              ...p,
-              likes_count: Math.max(0, p.likes_count - 1),
-              post_likes: p.post_likes.filter(like => like.user_id !== user.id)
-            };
-          } else {
-            return {
-              ...p,
-              likes_count: p.likes_count + 1,
-              post_likes: [...p.post_likes, { user_id: user.id }]
-            };
-          }
-        }
-        return p;
-      });
-    });
+    // Update local storage
+    if (isCurrentlyLiked) {
+      storedLikes[postId] = postLikes.filter(like => like.user_id !== user.id);
+      saveLikesToStorage(storedLikes);
+      const updatedPosts = getStoredPosts().map(p =>
+        p.id === postId ? { ...p, likes_count: Math.max(0, p.likes_count - 1), post_likes: storedLikes[postId] } : p
+      );
+      savePostsToStorage(updatedPosts);
+      queryClient.setQueryData(['posts', topicId], updatedPosts);
+    } else {
+      storedLikes[postId] = [...postLikes, { user_id: user.id }];
+      saveLikesToStorage(storedLikes);
+      const updatedPosts = getStoredPosts().map(p =>
+        p.id === postId ? { ...p, likes_count: p.likes_count + 1, post_likes: storedLikes[postId] } : p
+      );
+      savePostsToStorage(updatedPosts);
+      queryClient.setQueryData(['posts', topicId], updatedPosts);
+    }
 
+    // Sync with Supabase
     try {
       if (isCurrentlyLiked) {
         const { error } = await supabase
@@ -510,7 +567,7 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
           .delete()
           .eq('post_id', postId)
           .eq('user_id', user.id);
-        
+
         if (error) {
           console.error('Error removing like:', error);
           throw error;
@@ -519,7 +576,7 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
         const { error } = await supabase
           .from('post_likes')
           .insert([{ post_id: postId, user_id: user.id }]);
-        
+
         if (error) {
           console.error('Error adding like:', error);
           throw error;
@@ -528,7 +585,21 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
 
       toast({ title: 'Success', description: isCurrentlyLiked ? 'Like removed.' : 'Post liked.' });
     } catch (error) {
-      queryClient.invalidateQueries({ queryKey: ['posts', topicId] });
+      // Rollback
+      const rollbackLikes = getStoredLikes();
+      if (isCurrentlyLiked) {
+        rollbackLikes[postId] = [...postLikes, { user_id: user.id }];
+      } else {
+        rollbackLikes[postId] = postLikes.filter(like => like.user_id !== user.id);
+      }
+      saveLikesToStorage(rollbackLikes);
+      const rollbackPosts = getStoredPosts().map(p =>
+        p.id === postId
+          ? { ...p, likes_count: isCurrentlyLiked ? p.likes_count + 1 : Math.max(0, p.likes_count - 1), post_likes: rollbackLikes[postId] }
+          : p
+      );
+      savePostsToStorage(rollbackPosts);
+      queryClient.setQueryData(['posts', topicId], rollbackPosts);
       toast({ title: 'Error', description: 'Failed to update like.', variant: 'destructive' });
     }
   };
@@ -547,7 +618,7 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
     if (!content?.trim()) return;
 
     const tempCommentId = `temp-comment-${Date.now()}-${Math.random()}`;
-    const optimisticComment = {
+    const newCommentData = {
       id: tempCommentId,
       content: content.trim(),
       created_at: new Date().toISOString(),
@@ -555,44 +626,61 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
       profiles: {
         username: user.user_metadata?.username || user.email?.split('@')[0] || 'Anonymous',
         full_name: user.user_metadata?.full_name || null,
-        avatar_url: user.user_metadata?.avatar_url || null
-      }
+        avatar_url: user.user_metadata?.avatar_url || null,
+      },
     };
 
-    setOptimisticComments(prev => ({
-      ...prev,
-      [postId]: [...(prev[postId] || []), optimisticComment]
-    }));
+    // Update local storage
+    const storedComments = getStoredComments();
+    storedComments[postId] = [...(storedComments[postId] || []), newCommentData];
+    saveCommentsToStorage(storedComments);
+    const updatedPosts = getStoredPosts().map(post =>
+      post.id === postId ? { ...post, comments: storedComments[postId] } : post
+    );
+    savePostsToStorage(updatedPosts);
+    queryClient.setQueryData(['posts', topicId], updatedPosts);
 
     setNewComment({ ...newComment, [postId]: '' });
 
+    // Sync with Supabase
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('comments')
         .insert([{
           post_id: postId,
           user_id: user.id,
-          content: content.trim()
+          content: content.trim(),
         }])
         .select()
         .single();
 
       if (error) {
         console.error('Error adding comment:', error);
-        setOptimisticComments(prev => ({
-          ...prev,
-          [postId]: prev[postId]?.filter(comment => comment.id !== tempCommentId) || []
-        }));
+        // Remove from local storage on error
+        storedComments[postId] = storedComments[postId].filter(c => c.id !== tempCommentId);
+        saveCommentsToStorage(storedComments);
+        const rollbackPosts = getStoredPosts().map(post =>
+          post.id === postId ? { ...post, comments: storedComments[postId] } : post
+        );
+        savePostsToStorage(rollbackPosts);
+        queryClient.setQueryData(['posts', topicId], rollbackPosts);
         toast({ title: 'Error', description: 'Failed to add comment: ' + error.message, variant: 'destructive' });
         throw error;
       }
 
+      // Update local storage with real comment ID
+      storedComments[postId] = storedComments[postId].map(c =>
+        c.id === tempCommentId ? { ...c, id: data.id, created_at: data.created_at } : c
+      );
+      saveCommentsToStorage(storedComments);
+      const updatedPostsWithRealComment = getStoredPosts().map(post =>
+        post.id === postId ? { ...post, comments: storedComments[postId] } : post
+      );
+      savePostsToStorage(updatedPostsWithRealComment);
+      queryClient.setQueryData(['posts', topicId], updatedPostsWithRealComment);
       toast({ title: 'Success', description: 'Comment added successfully.' });
     } catch (error) {
-      setOptimisticComments(prev => ({
-        ...prev,
-        [postId]: prev[postId]?.filter(comment => comment.id !== tempCommentId) || []
-      }));
+      console.error('Error syncing comment with database:', error);
     }
   };
 
@@ -601,10 +689,10 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
     return parts.map((part, index) => {
       if (index % 2 === 1) {
         return (
-          <img 
-            key={index} 
-            src={part} 
-            alt="Post image" 
+          <img
+            key={index}
+            src={part}
+            alt="Post image"
             className="max-w-full h-auto rounded-lg mt-3"
             onError={(e) => {
               console.error('Image failed to load:', part);
@@ -631,7 +719,16 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
 
   return (
     <div className="space-y-6">
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+      <Dialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) {
+            setNewPost({ title: '', content: '' });
+            setSelectedImages([]);
+          }
+        }}
+      >
         <DialogTrigger asChild>
           <Button className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 shadow-lg">
             <Plus className="h-4 w-4 mr-2" />
@@ -656,7 +753,6 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
               rows={4}
               className="border-2 border-blue-300 focus:border-green-400"
             />
-            
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Button
@@ -673,7 +769,6 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                   {selectedImages.length} image(s) selected
                 </span>
               </div>
-              
               <input
                 ref={fileInputRef}
                 type="file"
@@ -682,7 +777,6 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                 onChange={handleImageSelect}
                 className="hidden"
               />
-              
               {selectedImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {selectedImages.map((image, index) => (
@@ -706,9 +800,8 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                 </div>
               )}
             </div>
-            
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={!newPost.title.trim() || !newPost.content.trim() || !isOnline}
               className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
             >
@@ -759,22 +852,22 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
         ) : (
           <div className="space-y-6 p-4">
             {allPosts.map((post) => {
-              const isLiked = post.post_likes?.some(like => like.user_id === user?.id) || false;
-              const allComments = [...post.comments, ...(optimisticComments[post.id] || [])].sort(
+              const isLiked = (getStoredLikes()[post.id] || []).some(like => like.user_id === user?.id);
+              const allComments = (getStoredComments()[post.id] || []).sort(
                 (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
               );
               const isOwnPost = post.user_id === user?.id;
-              
+
               return (
-                <Card key={post.id} className={`border-3 border-blue-200 ${post.id.startsWith('temp-') ? 'opacity-70' : ''}`}>
+                <Card key={post.id} className="border-3 border-blue-200">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between gap-2 mb-4">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center text-white text-sm font-medium shadow-md">
                           {post.profiles?.avatar_url ? (
-                            <img 
-                              src={post.profiles.avatar_url} 
-                              alt="Avatar" 
+                            <img
+                              src={post.profiles.avatar_url}
+                              alt="Avatar"
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
@@ -787,13 +880,9 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                           </div>
                           <div className="text-sm text-gray-500">
                             {format(new Date(post.created_at), 'MMM d, yyyy')}
-                            {post.id.startsWith('temp-') && (
-                              <span className="ml-2 text-xs text-amber-500 animate-pulse">Posting...</span>
-                            )}
                           </div>
                         </div>
                       </div>
-                      
                       {isOwnPost && !post.id.startsWith('temp-') && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -814,7 +903,7 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel className="border-2 border-blue-300">Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
+                              <AlertDialogAction
                                 onClick={() => handleDeletePost(post.id)}
                                 className="bg-red-600 hover:bg-red-700"
                               >
@@ -825,19 +914,15 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                         </AlertDialog>
                       )}
                     </div>
-
                     <h3 className="text-xl font-semibold mb-3">{post.title}</h3>
-                    <div className="text-gray-700 mb-4">
-                      {renderContent(post.content)}
-                    </div>
-
+                    <div className="text-gray-700 mb-4">{renderContent(post.content)}</div>
                     <div className="flex items-center gap-4 mb-4">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleLikePost(post.id)}
                         className={isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-gray-600'}
-                        disabled={post.id.startsWith('temp-') || !isOnline}
+                        disabled={!isOnline}
                       >
                         <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
                         {post.likes_count} {post.likes_count === 1 ? 'Like' : 'Likes'}
@@ -847,21 +932,18 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                         {allComments.length} {allComments.length === 1 ? 'Comment' : 'Comments'}
                       </span>
                     </div>
-
                     <div className="space-y-3">
                       {allComments.map((comment) => (
-                        <div key={comment.id} className={`bg-gray-50 rounded-lg p-3 border-2 border-blue-100 ${comment.id.startsWith('temp-') ? 'opacity-70' : ''}`}>
+                        <div key={comment.id} className="bg-gray-50 rounded-lg p-3 border-2 border-blue-100">
                           <div className="flex items-center gap-2 mb-2">
                             <div
-                              style={{
-                                backgroundColor: getRandomColor(),
-                              }}
+                              style={{ backgroundColor: getRandomColor() }}
                               className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs shadow-sm"
                             >
                               {comment.profiles?.avatar_url ? (
-                                <img 
-                                  src={comment.profiles.avatar_url} 
-                                  alt="Avatar" 
+                                <img
+                                  src={comment.profiles.avatar_url}
+                                  alt="Avatar"
                                   className="w-6 h-6 rounded-full object-cover"
                                 />
                               ) : (
@@ -873,28 +955,24 @@ const CommunityPosts: React.FC<CommunityPostsProps> = ({ topicId }) => {
                             </span>
                             <span className="text-xs text-gray-500">
                               {format(new Date(comment.created_at), 'MMM d, HH:mm')}
-                              {comment.id.startsWith('temp-') && (
-                                <span className="ml-2 text-xs text-amber-500 animate-pulse">Posting...</span>
-                              )}
                             </span>
                           </div>
                           <p className="text-sm">{comment.content}</p>
                         </div>
                       ))}
-
                       <div className="flex gap-2">
                         <Input
                           placeholder="Add a comment..."
                           value={newComment[post.id] || ''}
                           onChange={(e) => setNewComment({ ...newComment, [post.id]: e.target.value })}
                           onKeyPress={(e) => e.key === 'Enter' && handleAddComment(post.id)}
-                          disabled={post.id.startsWith('temp-') || !isOnline}
+                          disabled={!isOnline}
                           className="border-2 border-blue-300 focus:border-green-400"
                         />
                         <Button
                           size="sm"
                           onClick={() => handleAddComment(post.id)}
-                          disabled={!newComment[post.id]?.trim() || post.id.startsWith('temp-') || !isOnline}
+                          disabled={!newComment[post.id]?.trim() || !isOnline}
                           className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
                         >
                           <Send className="h-4 w-4" />
