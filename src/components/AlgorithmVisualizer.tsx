@@ -4,6 +4,30 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, RotateCcw, SkipForward } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
+// Mapping of algorithms to their visualization GIFs
+const algorithmGifs: Record<string, string> = {
+  'bfs': 'https://skilled.dev/images/bfs.gif',
+  'dfs': 'https://skilled.dev/images/dfs.gif',
+  'dijkstra': 'https://upload.wikimedia.org/wikipedia/commons/5/57/Dijkstra_Animation.gif',
+  'bellman-ford': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Bellman%E2%80%93Ford_algorithm_example.gif/640px-Bellman%E2%80%93Ford_algorithm_example.gif',
+  'floyd-warshall': 'https://upload.wikimedia.org/wikipedia/commons/0/0f/Floyd_warshall_gif.gif',
+  'kruskals': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/MST_kruskal_en.gif/600px-MST_kruskal_en.gif',
+  'prims': 'https://upload.wikimedia.org/wikipedia/en/9/96/Prim-animation.gif',
+  'topological-sort': 'https://i.makeagif.com/media/11-14-2018/ApEYz2.gif',
+  'inorder': 'https://upload.wikimedia.org/wikipedia/commons/4/48/Inorder-traversal.gif',
+  'preorder': 'https://upload.wikimedia.org/wikipedia/commons/a/ac/Preorder-traversal.gif',
+  'postorder': 'https://upload.wikimedia.org/wikipedia/commons/2/28/Postorder-traversal.gif',
+  'level-order': 'https://miro.medium.com/v2/resize:fit:1112/1*aU13AOqRn831jJL38JWIzg.gif',
+  'bst-insert': 'https://www.gormanalysis.com/blog/making-a-binary-search-tree-in-cpp_files/InsertNaive.gif',
+  'bst-delete': 'https://cdn.devdojo.com/images/july2021/leafnodedeleted.gif',
+  'avl-rotation': 'https://wkdtjsgur100.github.io/images/posts/rotation.gif',
+  'red-black-fix': 'https://miro.medium.com/v2/resize:fit:1400/1*9KNOwToK6dtFkf5w69eaQA.gif',
+  'fibonacci': 'https://miro.medium.com/v2/resize:fit:1046/1*9J2Wf2sapv9XeYtjQzPwVA.gif',
+  'knapsack': 'https://astikanand.github.io/techblogs/dynamic-programming-patterns/assets/knapsack_tabulation.gif',
+  'lcs': 'https://gabrielghe.github.io/assets/themes/images/2016-01-04-longest-common-subsequence3.gif',
+  'edit-distance': 'https://www.ideserve.co.in/learn/img/editDistance_0.gif',
+};
+
 interface VisualizerProps {
   algorithm: string;
   data: number[];
@@ -18,46 +42,40 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [steps, setSteps] = useState<any[]>([]);
 
-  // Generate steps based on algorithm
+  const isBarGraphAlgorithm = !Object.keys(algorithmGifs).includes(algorithm);
+
   useEffect(() => {
-    const generatedSteps = generateAlgorithmSteps(algorithm, data);
-    setSteps(generatedSteps);
-    setCurrentStep(0);
-    setArray(data);
-    setHighlightedIndices([]);
-  }, [algorithm, data]);
+    if (isBarGraphAlgorithm) {
+      const generatedSteps = generateAlgorithmSteps(algorithm, data);
+      setSteps(generatedSteps);
+      setCurrentStep(0);
+      setArray(data);
+      setHighlightedIndices([]);
+    }
+  }, [algorithm, data, isBarGraphAlgorithm]);
 
   const generateAlgorithmSteps = (algo: string, inputData: number[]) => {
     switch (algo) {
-      // Array operations
       case 'array-insert':
         return generateArrayInsertSteps(inputData);
       case 'array-delete':
         return generateArrayDeleteSteps(inputData);
       case 'array-search':
         return generateArraySearchSteps(inputData);
-      
-      // Linked list operations
       case 'linked-list-insert':
         return generateLinkedListSteps(inputData, 'insert');
       case 'linked-list-delete':
         return generateLinkedListSteps(inputData, 'delete');
       case 'linked-list-traverse':
         return generateLinkedListSteps(inputData, 'traverse');
-      
-      // Stack operations
       case 'stack-push':
         return generateStackSteps(inputData, 'push');
       case 'stack-pop':
         return generateStackSteps(inputData, 'pop');
-      
-      // Queue operations
       case 'queue-enqueue':
         return generateQueueSteps(inputData, 'enqueue');
       case 'queue-dequeue':
         return generateQueueSteps(inputData, 'dequeue');
-      
-      // Sorting algorithms
       case 'bubble-sort':
         return generateBubbleSortSteps(inputData);
       case 'quick-sort':
@@ -74,69 +92,20 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
         return generateRadixSortSteps(inputData);
       case 'counting-sort':
         return generateCountingSortSteps(inputData);
-      
-      // Searching algorithms
       case 'linear-search':
-        return generateLinearSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)]);
+        return generateLinearSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)] || 0);
       case 'binary-search':
-        return generateBinarySearchSteps(inputData, inputData[Math.floor(inputData.length / 2)]);
+        return generateBinarySearchSteps(inputData, inputData[Math.floor(inputData.length / 2)] || 0);
       case 'jump-search':
-        return generateJumpSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)]);
+        return generateJumpSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)] || 0);
       case 'exponential-search':
-        return generateExponentialSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)]);
+        return generateExponentialSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)] || 0);
       case 'interpolation-search':
-        return generateInterpolationSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)]);
+        return generateInterpolationSearchSteps(inputData, inputData[Math.floor(inputData.length / 2)] || 0);
       case 'ternary-search':
-        return generateTernarySearchSteps(inputData, inputData[Math.floor(inputData.length / 2)]);
-      
-      // Graph algorithms
-      case 'bfs':
-        return generateBFSSteps(inputData);
-      case 'dfs':
-        return generateDFSSteps(inputData);
-      case 'dijkstra':
-        return generateDijkstraSteps(inputData);
-      case 'bellman-ford':
-        return generateBellmanFordSteps(inputData);
-      case 'floyd-warshall':
-        return generateFloydWarshallSteps(inputData);
-      case 'kruskals':
-        return generateKruskalsSteps(inputData);
-      case 'prims':
-        return generatePrimsSteps(inputData);
-      case 'topological-sort':
-        return generateTopologicalSortSteps(inputData);
-      
-      // Tree algorithms
-      case 'inorder':
-        return generateTreeTraversalSteps(inputData, 'inorder');
-      case 'preorder':
-        return generateTreeTraversalSteps(inputData, 'preorder');
-      case 'postorder':
-        return generateTreeTraversalSteps(inputData, 'postorder');
-      case 'level-order':
-        return generateTreeTraversalSteps(inputData, 'level-order');
-      case 'bst-insert':
-        return generateBSTSteps(inputData, 'insert');
-      case 'bst-delete':
-        return generateBSTSteps(inputData, 'delete');
-      case 'avl-rotation':
-        return generateAVLSteps(inputData);
-      case 'red-black-fix':
-        return generateRedBlackSteps(inputData);
-      
-      // Dynamic programming
-      case 'fibonacci':
-        return generateFibonacciSteps(inputData);
-      case 'knapsack':
-        return generateKnapsackSteps(inputData);
-      case 'lcs':
-        return generateLCSSteps(inputData);
-      case 'edit-distance':
-        return generateEditDistanceSteps(inputData);
+        return generateTernarySearchSteps(inputData, inputData[Math.floor(inputData.length / 2)] || 0);
       case 'coin-change':
         return generateCoinChangeSteps(inputData);
-      
       default:
         return [];
     }
@@ -161,7 +130,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       description: `Inserting ${newElement} at index ${insertIndex}`
     });
     
-    // Shift elements to the right
     for (let i = workingArray.length; i > insertIndex; i--) {
       if (i - 1 >= 0) {
         workingArray[i] = workingArray[i - 1];
@@ -200,7 +168,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       description: `Deleting element at index ${deleteIndex}: ${workingArray[deleteIndex]}`
     });
     
-    // Shift elements to the left
     for (let i = deleteIndex; i < workingArray.length - 1; i++) {
       workingArray[i] = workingArray[i + 1];
       steps.push({
@@ -222,7 +189,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
 
   const generateArraySearchSteps = (arr: number[]) => {
     const steps = [];
-    const target = arr[3] || arr[0];
+    const target = arr[3] || arr[0] || 0;
     
     for (let i = 0; i < arr.length; i++) {
       steps.push({
@@ -244,7 +211,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Linked List operations (simplified visualization using array)
+  // Linked List operations
   const generateLinkedListSteps = (arr: number[], operation: string) => {
     const steps = [];
     const workingArray = [...arr];
@@ -346,11 +313,11 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Counting Sort implementation
+  // Counting Sort
   const generateCountingSortSteps = (arr: number[]) => {
     const steps = [];
     const workingArray = [...arr];
-    const max = Math.max(...workingArray);
+    const max = Math.max(...workingArray, 0);
     const count = new Array(max + 1).fill(0);
     
     steps.push({
@@ -359,7 +326,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       description: `Starting counting sort. Max value: ${max}`
     });
     
-    // Count occurrences
     for (let i = 0; i < workingArray.length; i++) {
       count[workingArray[i]]++;
       steps.push({
@@ -369,7 +335,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       });
     }
     
-    // Reconstruct sorted array
     let index = 0;
     for (let i = 0; i <= max; i++) {
       while (count[i] > 0) {
@@ -393,11 +358,11 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Radix Sort implementation
+  // Radix Sort
   const generateRadixSortSteps = (arr: number[]) => {
     const steps = [];
     const workingArray = [...arr];
-    const max = Math.max(...workingArray);
+    const max = Math.max(...workingArray, 0);
     
     steps.push({
       array: [...workingArray],
@@ -415,24 +380,20 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       const output = new Array(workingArray.length);
       const count = new Array(10).fill(0);
       
-      // Count occurrences of each digit
       for (let i = 0; i < workingArray.length; i++) {
         count[Math.floor(workingArray[i] / exp) % 10]++;
       }
       
-      // Change count[i] to actual position
       for (let i = 1; i < 10; i++) {
         count[i] += count[i - 1];
       }
       
-      // Build output array
       for (let i = workingArray.length - 1; i >= 0; i--) {
         const digit = Math.floor(workingArray[i] / exp) % 10;
         output[count[digit] - 1] = workingArray[i];
         count[digit]--;
       }
       
-      // Copy output array to working array
       for (let i = 0; i < workingArray.length; i++) {
         workingArray[i] = output[i];
         steps.push({
@@ -452,7 +413,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Bubble Sort implementation
+  // Bubble Sort
   const generateBubbleSortSteps = (arr: number[]) => {
     const steps = [];
     const workingArray = [...arr];
@@ -485,7 +446,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Insertion Sort implementation
+  // Insertion Sort
   const generateInsertionSortSteps = (arr: number[]) => {
     const steps = [];
     const workingArray = [...arr];
@@ -534,7 +495,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Selection Sort implementation
+  // Selection Sort
   const generateSelectionSortSteps = (arr: number[]) => {
     const steps = [];
     const workingArray = [...arr];
@@ -584,13 +545,12 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Heap Sort implementation
+  // Heap Sort
   const generateHeapSortSteps = (arr: number[]) => {
     const steps = [];
     const workingArray = [...arr];
     const n = workingArray.length;
     
-    // Build max heap
     steps.push({
       array: [...workingArray],
       comparing: [],
@@ -601,7 +561,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       heapify(workingArray, n, i, steps);
     }
     
-    // Extract elements from heap one by one
     for (let i = n - 1; i > 0; i--) {
       [workingArray[0], workingArray[i]] = [workingArray[i], workingArray[0]];
       steps.push({
@@ -647,7 +606,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     }
   };
 
-  // Merge Sort implementation
+  // Merge Sort
   const generateMergeSortSteps = (arr: number[]) => {
     const steps: any[] = [];
     const workingArray = [...arr];
@@ -655,7 +614,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     const mergeSort = (arr: number[], left: number, right: number) => {
       if (left < right) {
         const mid = Math.floor((left + right) / 2);
-        
         steps.push({
           array: [...workingArray],
           comparing: [],
@@ -683,7 +641,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
           j++;
         }
         k++;
-        
         steps.push({
           array: [...arr],
           comparing: [k - 1],
@@ -705,7 +662,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     };
     
     mergeSort(workingArray, 0, workingArray.length - 1);
-    
     steps.push({
       array: [...workingArray],
       comparing: [],
@@ -715,7 +671,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Quick Sort implementation
+  // Quick Sort
   const generateQuickSortSteps = (arr: number[]) => {
     const steps: any[] = [];
     const workingArray = [...arr];
@@ -774,7 +730,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Binary Search implementation
+  // Binary Search
   const generateBinarySearchSteps = (arr: number[], target: number) => {
     const steps: any[] = [];
     const sortedArray = [...arr].sort((a, b) => a - b);
@@ -783,7 +739,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     
     while (left <= right) {
       const mid = Math.floor((left + right) / 2);
-      
       steps.push({
         array: sortedArray,
         comparing: [mid],
@@ -820,7 +775,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Linear Search implementation
+  // Linear Search
   const generateLinearSearchSteps = (arr: number[], target: number) => {
     const steps: any[] = [];
     
@@ -844,7 +799,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Jump Search implementation
+  // Jump Search
   const generateJumpSearchSteps = (arr: number[], target: number) => {
     const steps = [];
     const sortedArray = [...arr].sort((a, b) => a - b);
@@ -858,7 +813,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       description: `Jump Search: step size = √${n} = ${step}`
     });
     
-    // Find the block where element is present
     while (prev < n && sortedArray[Math.min(step, n) - 1] < target) {
       steps.push({
         array: sortedArray,
@@ -870,7 +824,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       if (prev >= n) break;
     }
     
-    // Linear search in the identified block
     for (let i = prev; i < Math.min(step, n); i++) {
       steps.push({
         array: sortedArray,
@@ -890,7 +843,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Exponential Search placeholder
+  // Exponential Search
   const generateExponentialSearchSteps = (arr: number[], target: number) => {
     const steps = [];
     const sortedArray = [...arr].sort((a, b) => a - b);
@@ -920,7 +873,6 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       description: `Binary search between indexes ${left} and ${right}`
     });
     
-    // Use binary search steps within the range
     let l = left;
     let r = right;
     while (l <= r) {
@@ -947,7 +899,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Interpolation Search placeholder
+  // Interpolation Search
   const generateInterpolationSearchSteps = (arr: number[], target: number) => {
     const steps = [];
     const sortedArray = [...arr].sort((a, b) => a - b);
@@ -995,7 +947,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Ternary Search placeholder
+  // Ternary Search
   const generateTernarySearchSteps = (arr: number[], target: number) => {
     const steps = [];
     const sortedArray = [...arr].sort((a, b) => a - b);
@@ -1042,723 +994,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Placeholder implementations for graph algorithms
-  const generateBFSSteps = (arr: number[]) => {
-    const steps = [];
-    steps.push({
-      array: [...arr],
-      comparing: [],
-      description: "BFS traversal simulation - visiting nodes level by level"
-    });
-    
-    for (let i = 0; i < arr.length; i++) {
-      steps.push({
-        array: [...arr],
-        comparing: [i],
-        description: `Visiting node ${arr[i]} at level ${Math.floor(Math.log2(i + 1))}`
-      });
-    }
-    
-    return steps;
-  };
-
-  const generateDFSSteps = (arr: number[]) => {
-    const steps = [];
-    steps.push({
-      array: [...arr],
-      comparing: [],
-      description: "DFS traversal simulation - exploring depths first"
-    });
-    
-    for (let i = 0; i < arr.length; i++) {
-      steps.push({
-        array: [...arr],
-        comparing: [i],
-        description: `Visiting node ${arr[i]} - depth ${i % 3}`
-      });
-    }
-    
-    return steps;
-  };
-
-  const generateDijkstraSteps = (arr: number[]) => {
-    const steps = [];
-    const n = arr.length;
-    const dist = new Array(n).fill(Infinity);
-    const visited = new Array(n).fill(false);
-    const startNode = 0;
-    
-    dist[startNode] = 0;
-    
-    steps.push({
-      array: [...dist],
-      comparing: [startNode],
-      description: `Dijkstra's Algorithm: Starting from node ${startNode}, distance = 0`
-    });
-    
-    for (let count = 0; count < n - 1; count++) {
-      // Find minimum distance vertex
-      let u = -1;
-      for (let v = 0; v < n; v++) {
-        if (!visited[v] && (u === -1 || dist[v] < dist[u])) {
-          u = v;
-        }
-      }
-      
-      visited[u] = true;
-      steps.push({
-        array: [...dist],
-        comparing: [u],
-        description: `Selected node ${u} with minimum distance ${dist[u]}`
-      });
-      
-      // Update distances of adjacent vertices
-      for (let v = 0; v < n; v++) {
-        if (!visited[v] && Math.abs(u - v) === 1) { // Simulate adjacent nodes
-          const weight = Math.abs(arr[u] - arr[v]);
-          if (dist[u] + weight < dist[v]) {
-            dist[v] = dist[u] + weight;
-            steps.push({
-              array: [...dist],
-              comparing: [u, v],
-              description: `Updated distance to node ${v}: ${dist[v]}`
-            });
-          }
-        }
-      }
-    }
-    
-    steps.push({
-      array: [...dist],
-      comparing: [],
-      description: "Dijkstra's algorithm complete! Shortest distances found."
-    });
-    
-    return steps;
-  };
-
-  const generateBellmanFordSteps = (arr: number[]) => {
-    const steps = [];
-    const n = arr.length;
-    const dist = new Array(n).fill(Infinity);
-    const startNode = 0;
-    
-    dist[startNode] = 0;
-    
-    steps.push({
-      array: [...dist],
-      comparing: [startNode],
-      description: `Bellman-Ford: Starting from node ${startNode}`
-    });
-    
-    // Relax all edges |V| - 1 times
-    for (let i = 0; i < n - 1; i++) {
-      steps.push({
-        array: [...dist],
-        comparing: [],
-        description: `Iteration ${i + 1}: Relaxing all edges`
-      });
-      
-      for (let u = 0; u < n - 1; u++) {
-        const v = u + 1;
-        const weight = Math.abs(arr[u] - arr[v]);
-        
-        if (dist[u] !== Infinity && dist[u] + weight < dist[v]) {
-          dist[v] = dist[u] + weight;
-          steps.push({
-            array: [...dist],
-            comparing: [u, v],
-            description: `Relaxed edge ${u}->${v}, new distance: ${dist[v]}`
-          });
-        }
-      }
-    }
-    
-    steps.push({
-      array: [...dist],
-      comparing: [],
-      description: "Bellman-Ford complete! No negative cycles detected."
-    });
-    
-    return steps;
-  };
-
-  const generateFloydWarshallSteps = (arr: number[]) => {
-    const steps = [];
-    const n = Math.min(arr.length, 4); // Limit for visualization
-    const dist = Array(n).fill(null).map(() => Array(n).fill(Infinity));
-    
-    // Initialize distances
-    for (let i = 0; i < n; i++) {
-      dist[i][i] = 0;
-      if (i < n - 1) {
-        dist[i][i + 1] = Math.abs(arr[i] - arr[i + 1]);
-        dist[i + 1][i] = Math.abs(arr[i] - arr[i + 1]);
-      }
-    }
-    
-    steps.push({
-      array: dist.flat(),
-      comparing: [],
-      description: "Floyd-Warshall: Initial distance matrix"
-    });
-    
-    for (let k = 0; k < n; k++) {
-      steps.push({
-        array: dist.flat(),
-        comparing: [k],
-        description: `Using node ${k} as intermediate vertex`
-      });
-      
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) {
-          if (dist[i][k] + dist[k][j] < dist[i][j]) {
-            dist[i][j] = dist[i][k] + dist[k][j];
-            steps.push({
-              array: dist.flat(),
-              comparing: [i * n + j],
-              description: `Updated dist[${i}][${j}] = ${dist[i][j]} via node ${k}`
-            });
-          }
-        }
-      }
-    }
-    
-    steps.push({
-      array: dist.flat(),
-      comparing: [],
-      description: "Floyd-Warshall complete! All-pairs shortest paths found."
-    });
-    
-    return steps;
-  };
-
-  const generateKruskalsSteps = (arr: number[]) => {
-    const steps = [];
-    const n = arr.length;
-    const edges = [];
-    const parent = Array.from({ length: n }, (_, i) => i);
-    
-    // Create edges from array
-    for (let i = 0; i < n - 1; i++) {
-      edges.push({
-        from: i,
-        to: i + 1,
-        weight: Math.abs(arr[i] - arr[i + 1])
-      });
-    }
-    
-    // Sort edges by weight
-    edges.sort((a, b) => a.weight - b.weight);
-    
-    steps.push({
-      array: [...arr],
-      comparing: [],
-      description: "Kruskal's MST: Sorted edges by weight"
-    });
-    
-    const find = (x: number): number => {
-      if (parent[x] !== x) {
-        parent[x] = find(parent[x]);
-      }
-      return parent[x];
-    };
-    
-    const union = (x: number, y: number) => {
-      const px = find(x);
-      const py = find(y);
-      if (px !== py) {
-        parent[px] = py;
-        return true;
-      }
-      return false;
-    };
-    
-    let mstWeight = 0;
-    let edgesAdded = 0;
-    
-    for (const edge of edges) {
-      if (union(edge.from, edge.to)) {
-        mstWeight += edge.weight;
-        edgesAdded++;
-        steps.push({
-          array: [...arr],
-          comparing: [edge.from, edge.to],
-          description: `Added edge ${edge.from}-${edge.to} (weight: ${edge.weight}), MST weight: ${mstWeight}`
-        });
-        
-        if (edgesAdded === n - 1) break;
-      } else {
-        steps.push({
-          array: [...arr],
-          comparing: [edge.from, edge.to],
-          description: `Rejected edge ${edge.from}-${edge.to} (would create cycle)`
-        });
-      }
-    }
-    
-    steps.push({
-      array: [...arr],
-      comparing: [],
-      description: `Kruskal's MST complete! Total weight: ${mstWeight}`
-    });
-    
-    return steps;
-  };
-
-  const generatePrimsSteps = (arr: number[]) => {
-    const steps = [];
-    const n = arr.length;
-    const inMST = new Array(n).fill(false);
-    const key = new Array(n).fill(Infinity);
-    const startNode = 0;
-    
-    key[startNode] = 0;
-    
-    steps.push({
-      array: [...key],
-      comparing: [startNode],
-      description: `Prim's MST: Starting from node ${startNode}`
-    });
-    
-    for (let count = 0; count < n; count++) {
-      // Find minimum key vertex not yet in MST
-      let u = -1;
-      for (let v = 0; v < n; v++) {
-        if (!inMST[v] && (u === -1 || key[v] < key[u])) {
-          u = v;
-        }
-      }
-      
-      inMST[u] = true;
-      steps.push({
-        array: [...key],
-        comparing: [u],
-        description: `Added node ${u} to MST (key: ${key[u]})`
-      });
-      
-      // Update key values of adjacent vertices
-      for (let v = 0; v < n; v++) {
-        if (!inMST[v] && Math.abs(u - v) === 1) { // Simulate adjacency
-          const weight = Math.abs(arr[u] - arr[v]);
-          if (weight < key[v]) {
-            key[v] = weight;
-            steps.push({
-              array: [...key],
-              comparing: [u, v],
-              description: `Updated key of node ${v} to ${weight}`
-            });
-          }
-        }
-      }
-    }
-    
-    steps.push({
-      array: [...key],
-      comparing: [],
-      description: "Prim's MST complete!"
-    });
-    
-    return steps;
-  };
-
-  const generateTopologicalSortSteps = (arr: number[]) => {
-    const steps = [];
-    const n = arr.length;
-    const visited = new Array(n).fill(false);
-    const result = [];
-    
-    steps.push({
-      array: [...arr],
-      comparing: [],
-      description: "Topological Sort: Starting DFS-based approach"
-    });
-    
-    const dfs = (v: number) => {
-      visited[v] = true;
-      steps.push({
-        array: [...arr],
-        comparing: [v],
-        description: `Visiting node ${v} (value: ${arr[v]})`
-      });
-      
-      // Simulate edges (node i connects to i+1 if arr[i] < arr[i+1])
-      for (let u = 0; u < n; u++) {
-        if (!visited[u] && Math.abs(v - u) === 1 && arr[v] < arr[u]) {
-          dfs(u);
-        }
-      }
-      
-      result.unshift(arr[v]);
-      steps.push({
-        array: [...result],
-        comparing: [result.length - 1],
-        description: `Added ${arr[v]} to topological order`
-      });
-    };
-    
-    for (let i = 0; i < n; i++) {
-      if (!visited[i]) {
-        dfs(i);
-      }
-    }
-    
-    steps.push({
-      array: [...result],
-      comparing: [],
-      description: "Topological sort complete!"
-    });
-    
-    return steps;
-  };
-
-  // Placeholder implementations for tree algorithms
-  const generateTreeTraversalSteps = (arr: number[], type: string) => {
-    const steps = [];
-    steps.push({
-      array: [...arr],
-      comparing: [],
-      description: `${type.charAt(0).toUpperCase() + type.slice(1)} traversal simulation`
-    });
-    for (let i = 0; i < arr.length; i++) {
-      steps.push({
-        array: [...arr],
-        comparing: [i],
-        description: `Visiting node ${arr[i]}`
-      });
-    }
-    return steps;
-  };
-
-  const generateBSTSteps = (arr: number[], operation: string) => {
-  const steps = [];
-  
-  // Handle edge cases
-  if (!arr || arr.length === 0) {
-    steps.push({
-      array: [],
-      comparing: [],
-      description: "BST Insert: Empty array, inserting as root"
-    });
-    if (operation === 'insert') {
-      steps.push({
-        array: [99], // Default value for empty BST
-        comparing: [0],
-        description: "Inserted 99 as root"
-      });
-    }
-    return steps;
-  }
-
-  // Use original array (no sorting needed for BST simulation)
-  const workingArray = [...arr];
-  
-  if (operation === 'insert') {
-    const newValue = Math.max(...workingArray, 0) + 10; // Avoid issues with empty arrays
-    let currentPos = 0; // Start at root (index 0 for simplicity)
-    let insertPos = null; // Track where to insert
-    const maxSteps = Math.min(arr.length * 2, 50); // Cap steps to prevent memory issues
-    let stepCount = 0;
-
-    steps.push({
-      array: [...workingArray],
-      comparing: [],
-      description: `BST Insert: Inserting ${newValue} into BST`
-    });
-
-    // Simulate BST traversal to find insertion point
-    while (currentPos < workingArray.length && stepCount < maxSteps) {
-      steps.push({
-        array: [...workingArray],
-        comparing: [currentPos],
-        description: `Checking node ${workingArray[currentPos]} at index ${currentPos}`
-      });
-      stepCount++;
-
-      if (newValue === workingArray[currentPos]) {
-        // Handle duplicate (insert to right for simplicity)
-        insertPos = currentPos + 1;
-        steps.push({
-          array: [...workingArray],
-          comparing: [currentPos],
-          description: `Duplicate ${newValue}, will insert to right`
-        });
-        break;
-      } else if (newValue < workingArray[currentPos]) {
-        // Should go left
-        if (currentPos * 2 + 1 < workingArray.length) {
-          currentPos = currentPos * 2 + 1; // Left child
-        } else {
-          insertPos = currentPos * 2 + 1; // Insert as left child
-          break;
-        }
-      } else {
-        // Should go right
-        if (currentPos * 2 + 2 < workingArray.length) {
-          currentPos = currentPos * 2 + 2; // Right child
-        } else {
-          insertPos = currentPos * 2 + 2; // Insert as right child
-          break;
-        }
-      }
-    }
-
-    // If no position found or max steps reached, insert at end
-    if (insertPos === null || insertPos >= workingArray.length) {
-      insertPos = workingArray.length;
-    }
-
-    // Insert the new value
-    workingArray.splice(insertPos, 0, newValue);
-    steps.push({
-      array: [...workingArray],
-      comparing: [insertPos],
-      description: `Inserted ${newValue} at index ${insertPos}`
-    });
-  } else if (operation === 'delete') {
-    // Keep original delete logic (since it works fine)
-    const workingArray = [...arr].sort((a, b) => a - b);
-    const deleteIndex = Math.floor(workingArray.length / 2);
-    const deleteValue = workingArray[deleteIndex];
-    
-    steps.push({
-      array: [...workingArray],
-      comparing: [deleteIndex],
-      description: `BST Delete: Removing ${deleteValue}`
-    });
-    
-    workingArray.splice(deleteIndex, 1);
-    steps.push({
-      array: [...workingArray],
-      comparing: [],
-      description: `Deleted ${deleteValue} from BST`
-    });
-  }
-  
-  steps.push({
-    array: [...workingArray],
-    comparing: [],
-    description: `BST ${operation} operation complete!`
-  });
-  
-  return steps;
-};
-
-  const generateAVLSteps = (arr: number[]) => {
-    const steps = [];
-    const workingArray = [...arr];
-    
-    steps.push({
-      array: [...workingArray],
-      comparing: [],
-      description: "AVL Rotation: Checking balance factors"
-    });
-    
-    // Simulate left rotation
-    if (workingArray.length >= 3) {
-      const temp = workingArray[0];
-      workingArray[0] = workingArray[1];
-      workingArray[1] = workingArray[2];
-      workingArray[2] = temp;
-      
-      steps.push({
-        array: [...workingArray],
-        comparing: [0, 1, 2],
-        description: "Performing left rotation to maintain AVL property"
-      });
-    }
-    
-    steps.push({
-      array: [...workingArray],
-      comparing: [],
-      description: "AVL tree balanced!"
-    });
-    
-    return steps;
-  };
-
-  const generateRedBlackSteps = (arr: number[]) => {
-    const steps = [];
-    const workingArray = [...arr];
-    
-    steps.push({
-      array: [...workingArray],
-      comparing: [],
-      description: "Red-Black Tree: Checking color properties"
-    });
-    
-    // Simulate color fixing
-    for (let i = 0; i < workingArray.length; i++) {
-      steps.push({
-        array: [...workingArray],
-        comparing: [i],
-        description: `Node ${workingArray[i]}: ${i % 2 === 0 ? 'Black' : 'Red'}`
-      });
-    }
-    
-    steps.push({
-      array: [...workingArray],
-      comparing: [],
-      description: "Red-Black tree properties maintained!"
-    });
-    
-    return steps;
-  };
-
-  // Placeholder implementations for dynamic programming algorithms
-  const generateFibonacciSteps = (arr: number[]) => {
-    const steps = [];
-    const n = Math.min(arr.length, 8);
-    const fib = [0, 1];
-    
-    steps.push({
-      array: [0, 1],
-      comparing: [],
-      description: "Fibonacci sequence: F(0)=0, F(1)=1"
-    });
-    
-    for (let i = 2; i < n; i++) {
-      fib[i] = fib[i-1] + fib[i-2];
-      steps.push({
-        array: [...fib],
-        comparing: [i],
-        description: `F(${i}) = F(${i-1}) + F(${i-2}) = ${fib[i-1]} + ${fib[i-2]} = ${fib[i]}`
-      });
-    }
-    
-    return steps;
-  };
-
-  const generateKnapsackSteps = (arr: number[]) => {
-    const steps = [];
-    const weights = arr.slice(0, Math.min(arr.length, 4));
-    const values = weights.map(w => w * 2); // Values are twice the weights
-    const capacity = Math.max(...weights) + 10;
-    
-    const dp = Array(weights.length + 1).fill(null).map(() => Array(capacity + 1).fill(0));
-    
-    steps.push({
-      array: [...weights],
-      comparing: [],
-      description: `0/1 Knapsack: weights=[${weights.join(',')}], values=[${values.join(',')}], capacity=${capacity}`
-    });
-    
-    for (let i = 1; i <= weights.length; i++) {
-      for (let w = 1; w <= capacity; w++) {
-        if (weights[i-1] <= w) {
-          dp[i][w] = Math.max(
-            values[i-1] + dp[i-1][w - weights[i-1]],
-            dp[i-1][w]
-          );
-          
-          steps.push({
-            array: [dp[i][w]],
-            comparing: [i-1],
-            description: `Item ${i}: weight=${weights[i-1]}, value=${values[i-1]}, dp[${i}][${w}] = ${dp[i][w]}`
-          });
-        } else {
-          dp[i][w] = dp[i-1][w];
-        }
-      }
-    }
-    
-    steps.push({
-      array: [dp[weights.length][capacity]],
-      comparing: [],
-      description: `Maximum value: ${dp[weights.length][capacity]}`
-    });
-    
-    return steps;
-  };
-
-  const generateLCSSteps = (arr: number[]) => {
-    const steps = [];
-    const seq1 = arr.slice(0, Math.min(arr.length, 4));
-    const seq2 = arr.slice(1, Math.min(arr.length + 1, 5));
-    
-    const dp = Array(seq1.length + 1).fill(null).map(() => Array(seq2.length + 1).fill(0));
-    
-    steps.push({
-      array: [...seq1],
-      comparing: [],
-      description: `LCS: seq1=[${seq1.join(',')}], seq2=[${seq2.join(',')}]`
-    });
-    
-    for (let i = 1; i <= seq1.length; i++) {
-      for (let j = 1; j <= seq2.length; j++) {
-        if (seq1[i-1] === seq2[j-1]) {
-          dp[i][j] = dp[i-1][j-1] + 1;
-          steps.push({
-            array: [dp[i][j]],
-            comparing: [i-1, j-1],
-            description: `Match found: ${seq1[i-1]}, LCS length = ${dp[i][j]}`
-          });
-        } else {
-          dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
-          steps.push({
-            array: [dp[i][j]],
-            comparing: [i-1],
-            description: `No match: taking max of previous values = ${dp[i][j]}`
-          });
-        }
-      }
-    }
-    
-    steps.push({
-      array: [dp[seq1.length][seq2.length]],
-      comparing: [],
-      description: `Longest Common Subsequence length: ${dp[seq1.length][seq2.length]}`
-    });
-    
-    return steps;
-  };
-
-  const generateEditDistanceSteps = (arr: number[]) => {
-    const steps = [];
-    const str1 = arr.slice(0, Math.min(arr.length, 3)).map(n => n.toString());
-    const str2 = arr.slice(1, Math.min(arr.length + 1, 4)).map(n => n.toString());
-    
-    const dp = Array(str1.length + 1).fill(null).map(() => Array(str2.length + 1).fill(0));
-    
-    // Initialize base cases
-    for (let i = 0; i <= str1.length; i++) dp[i][0] = i;
-    for (let j = 0; j <= str2.length; j++) dp[0][j] = j;
-    
-    steps.push({
-      array: [...arr],
-      comparing: [],
-      description: `Edit Distance: str1=[${str1.join(',')}], str2=[${str2.join(',')}]`
-    });
-    
-    for (let i = 1; i <= str1.length; i++) {
-      for (let j = 1; j <= str2.length; j++) {
-        if (str1[i-1] === str2[j-1]) {
-          dp[i][j] = dp[i-1][j-1];
-          steps.push({
-            array: [dp[i][j]],
-            comparing: [i-1],
-            description: `Characters match: ${str1[i-1]}, no operation needed`
-          });
-        } else {
-          dp[i][j] = 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
-          steps.push({
-            array: [dp[i][j]],
-            comparing: [i-1],
-            description: `Characters differ: ${str1[i-1]} vs ${str2[j-1]}, operations = ${dp[i][j]}`
-          });
-        }
-      }
-    }
-    
-    steps.push({
-      array: [dp[str1.length][str2.length]],
-      comparing: [],
-      description: `Minimum edit distance: ${dp[str1.length][str2.length]}`
-    });
-    
-    return steps;
-  };
-
+  //coin change
   const generateCoinChangeSteps = (arr: number[]) => {
     const steps = [];
     const coins = arr.slice(0, Math.min(arr.length, 4)).sort((a, b) => a - b);
@@ -1800,8 +1036,10 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
     return steps;
   };
 
-  // Animation controls
+  // Animation controls for bar graph algorithms
   useEffect(() => {
+    if (!isBarGraphAlgorithm) return;
+
     let interval: NodeJS.Timeout;
     if (isPlaying && currentStep < steps.length - 1) {
       interval = setInterval(() => {
@@ -1821,7 +1059,7 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       }, speed[0]);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, currentStep, speed, steps, onStepChange]);
+  }, [isPlaying, currentStep, speed, steps, onStepChange, isBarGraphAlgorithm]);
 
   const handlePlay = () => {
     if (currentStep >= steps.length - 1) {
@@ -1873,56 +1111,70 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Controls */}
-          <div className="flex gap-2">
-            <Button onClick={handlePlay}>
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-            <Button onClick={handleStep} variant="outline">
-              <SkipForward className="h-4 w-4" />
-            </Button>
-            <Button onClick={handleReset} variant="outline">
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-          </div>
+          {/* Controls for bar graph algorithms */}
+          {isBarGraphAlgorithm && (
+            <>
+              <div className="flex gap-2">
+                <Button onClick={handlePlay}>
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </Button>
+                <Button onClick={handleStep} variant="outline">
+                  <SkipForward className="h-4 w-4" />
+                </Button>
+                <Button onClick={handleReset} variant="outline">
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Speed: {1100 - speed[0]}ms
+                </label>
+                <Slider
+                  value={speed}
+                  onValueChange={setSpeed}
+                  max={1000}
+                  min={100}
+                  step={100}
+                  className="w-full"
+                />
+              </div>
+            </>
+          )}
 
-          {/* Speed Control */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              Speed: {1100 - speed[0]}ms
-            </label>
-            <Slider
-              value={speed}
-              onValueChange={setSpeed}
-              max={1000}
-              min={100}
-              step={100}
-              className="w-full"
-            />
-          </div>
-
-          {/* Array Visualization */}
+          {/* Visualization Area */}
           <div className="bg-white p-8 rounded-lg border">
-            <div className="flex items-end justify-center space-x-2 h-64">
-              {array.map((value, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div className="text-sm font-medium mb-2">{value}</div>
-                  <div
-                    className={`w-12 transition-all duration-300 ${getBarColor(index)}`}
-                    style={{ height: `${Math.max((value / Math.max(...array)) * 200, 20)}px` }}
-                  />
-                  <div className="text-xs mt-1 text-gray-500">{index}</div>
-                </div>
-              ))}
-            </div>
+            {isBarGraphAlgorithm ? (
+              <div className="flex items-end justify-center space-x-2 h-64">
+                {array.map((value, index) => (
+                  <div key={index} className="flex flex-col items-center">
+                    <div className="text-sm font-medium mb-2">{value}</div>
+                    <div
+                      className={`w-12 transition-all duration-300 ${getBarColor(index)}`}
+                      style={{ height: `${Math.max((value / Math.max(...array, 1)) * 200, 20)}px` }}
+                    />
+                    <div className="text-xs mt-1 text-gray-500">{index}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex justify-center items-center h-64">
+                <img
+                  src={algorithmGifs[algorithm]}
+                  alt={`${algorithm} visualization`}
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+            )}
           </div>
 
-          {/* Step Description */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <p className="text-gray-700">
-              {steps[currentStep]?.description || "Algorithm ready to start"}
-            </p>
-          </div>
+          {/* Step Description for bar graph algorithms */}
+          {isBarGraphAlgorithm && (
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <p className="text-gray-700">
+                {steps[currentStep]?.description || "Algorithm ready to start"}
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
