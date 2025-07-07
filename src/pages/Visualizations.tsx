@@ -384,36 +384,42 @@ const Visualizations: React.FC = () => {
                     }}
                   />
                 </CardContent>
-                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mt-2">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <RefreshCw className="h-5 w-5 mr-2" />
-                      Data Controls
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block text-gray-700">Enter Data (comma-separated):</label>
-                      <Input
-                        value={inputData}
-                        onChange={handleDataChange}
-                        placeholder="e.g., 64,34,25,12,22,11,90"
-                        className={error ? 'border-red-500' : ''}
-                      />
-                      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-                    </div>
-                    <Button onClick={generateRandomData} className="w-full bg-green-600 hover:bg-green-700">
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Generate Random Data
-                    </Button>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block text-gray-700">Current Data:</label>
-                      <div className="text-sm bg-gray-100 p-3 rounded-lg border">
-                        <code className="font-mono">[{currentData.join(', ')}]</code>
+                {!(
+                  algorithmCategories.graph.algorithms[selectedAlgorithm] ||
+                  algorithmCategories.tree.algorithms[selectedAlgorithm] ||
+                  selectedAlgorithm === 'coin-change'
+                ) && (
+                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mt-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <RefreshCw className="h-5 w-5 mr-2" />
+                        Data Controls
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block text-gray-700">Enter Data (comma-separated):</label>
+                        <Input
+                          value={inputData}
+                          onChange={handleDataChange}
+                          placeholder="e.g., 64,34,25,12,22,11,90"
+                          className={error ? 'border-red-500' : ''}
+                        />
+                        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <Button onClick={generateRandomData} className="w-full bg-green-600 hover:bg-green-700">
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Generate Random Data
+                      </Button>
+                      <div>
+                        <label className="text-sm font-medium mb-2 block text-gray-700">Current Data:</label>
+                        <div className="text-sm bg-gray-100 p-3 rounded-lg border">
+                          <code className="font-mono">[{currentData.join(', ')}]</code>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
                 {algorithmInfo && (
                   <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mt-2">
                     <CardHeader>
