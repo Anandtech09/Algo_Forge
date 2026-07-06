@@ -18,8 +18,8 @@ load_dotenv()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://algo-forge-ashy.vercel.app"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -53,7 +53,7 @@ async def execute_code(request: CodeRequest):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama3-70b-8192",
+                "model": "llama-3.3-70b-versatile",
                 "messages": [
                     {
                         "role": "system",
@@ -110,7 +110,7 @@ async def analyze_code(request: CodeRequest):
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama3-70b-8192",
+                "model": "llama-3.3-70b-versatile",
                 "messages": [
                     {
                         "role": "system",
@@ -186,7 +186,7 @@ Format your response clearly with numbered sections. Do not use code blocks or b
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "llama3-70b-8192",
+                    "model": "llama-3.3-70b-versatile",
                     "messages": [
                         {
                             "role": "system",
