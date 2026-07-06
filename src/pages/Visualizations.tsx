@@ -250,8 +250,8 @@ const Visualizations: React.FC = () => {
 
   const getCurrentAlgorithmInfo = () => {
     for (const category of Object.values(algorithmCategories)) {
-      if (category.algorithms[selectedAlgorithm]) {
-        return category.algorithms[selectedAlgorithm];
+      if (category.algorithms[selectedAlgorithm as keyof typeof category.algorithms]) {
+        return category.algorithms[selectedAlgorithm as keyof typeof category.algorithms];
       }
     }
     return null;
@@ -268,21 +268,21 @@ const Visualizations: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Fixed Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-3 text-gray-900 hover:text-blue-600 transition-colors">
               <ArrowLeft className="h-5 w-5" />
               <span className="font-medium">Back to Home</span>
             </Link>
-            <h1 className="text-xl font-bold text-gray-900">Algorithm Visualizations</h1>
-            <div className="w- haciénd24"></div>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">Algorithm Visualizations</h1>
+            <div className="w-24"></div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="relative h-64 overflow-hidden">
+      <div className="relative h-48 sm:h-64 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -290,60 +290,56 @@ const Visualizations: React.FC = () => {
             height: '120%'
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-green-900/70 to-blue-900/70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-blue-900/80" />
         <div className="relative z-10 h-full flex items-center justify-center">
           <div className="text-center text-white px-4 sm:px-6 lg:px-8">
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight mb-2">
               Algorithm Visualizations
             </h1>
-            <p className="text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-              Watch algorithms come to life with interactive step-by-step visualizations
+            <p className="text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed text-slate-200">
+              Watch algorithms come to life with interactive step-by-step trace animations
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-10xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Panel - Algorithm Selection */}
           <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-20">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Settings className="h-5 w-5 mr-2" />
+            <Card className="bg-white/90 border border-slate-200 shadow-md rounded-2xl">
+              <CardHeader className="p-4 sm:p-5 border-b border-slate-100">
+                <CardTitle className="flex items-center text-base sm:text-lg font-bold text-slate-800">
+                  <Settings className="h-4.5 w-4.5 mr-2 text-slate-500" />
                   Select Algorithm
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-5">
                 <Tabs defaultValue="sorting" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-2">
-                    <TabsTrigger value="sorting">Sort</TabsTrigger>
-                    <TabsTrigger value="searching">Search</TabsTrigger>
-                  </TabsList>
-                  <TabsList className="grid w-full grid-cols-2 mb-2">
-                    <TabsTrigger value="graph">Graph</TabsTrigger>
-                    <TabsTrigger value="tree">Tree</TabsTrigger>
-                  </TabsList>
-                  <TabsList className="grid w-full grid-cols-1 mb-4">
-                    <TabsTrigger value="dynamic">Dynamic</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-5 gap-1 bg-slate-100/80 p-1 rounded-xl mb-4">
+                    <TabsTrigger value="sorting" className="text-[10px] sm:text-xs py-1.5 rounded-lg font-medium">Sort</TabsTrigger>
+                    <TabsTrigger value="searching" className="text-[10px] sm:text-xs py-1.5 rounded-lg font-medium">Find</TabsTrigger>
+                    <TabsTrigger value="graph" className="text-[10px] sm:text-xs py-1.5 rounded-lg font-medium">Graph</TabsTrigger>
+                    <TabsTrigger value="tree" className="text-[10px] sm:text-xs py-1.5 rounded-lg font-medium">Tree</TabsTrigger>
+                    <TabsTrigger value="dynamic" className="text-[10px] sm:text-xs py-1.5 rounded-lg font-medium">DP</TabsTrigger>
                   </TabsList>
                   {Object.entries(algorithmCategories).map(([categoryKey, category]) => (
-                    <TabsContent key={categoryKey} value={categoryKey} className="space-y-3 max-h-[65vh] overflow-auto">
+                    <TabsContent key={categoryKey} value={categoryKey} className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                       {Object.entries(category.algorithms).map(([algoKey, algo]) => (
                         <div
                           key={algoKey}
-                          className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md transform hover:-translate-y-1 ${
+                          className={`p-3.5 rounded-xl border cursor-pointer transition-all hover:shadow-md transform hover:-translate-y-0.5 ${
                             selectedAlgorithm === algoKey
-                              ? 'bg-blue-50 border-blue-500 shadow-md'
-                              : 'bg-white/80 border-gray-200 hover:bg-white'
+                              ? 'bg-blue-50/50 border-blue-400 shadow-sm'
+                              : 'bg-white border-slate-200 hover:bg-slate-50/30'
                           }`}
                           onClick={() => handleAlgorithmSelect(algoKey)}
                         >
-                          <div className="font-semibold text-gray-900">{algo.name}</div>
-                          <div className="text-sm text-gray-600 mt-1.5">{algo.description}</div>
-                          <div className="text-xs text-gray-500 mt-1 space-y-1">
-                            <div>Time: <code className="bg-gray-100 px-1 rounded">{algo.complexity.time}</code></div>
-                            <div>Space: <code className="bg-gray-100 px-1 rounded">{algo.complexity.space}</code></div>
+                          <div className="font-bold text-sm text-slate-800">{algo.name}</div>
+                          <div className="text-xs text-slate-500 mt-1 leading-relaxed">{algo.description}</div>
+                          <div className="text-[10px] font-mono text-slate-400 mt-2 flex gap-3">
+                            <span>Time: <code className="bg-slate-100 text-slate-650 px-1 rounded font-semibold">{algo.complexity.time}</code></span>
+                            <span>Space: <code className="bg-slate-100 text-slate-650 px-1 rounded font-semibold">{algo.complexity.space}</code></span>
                           </div>
                         </div>
                       ))}
@@ -355,102 +351,118 @@ const Visualizations: React.FC = () => {
           </div>
 
           {/* Main Visualization Area */}
-          <div id="visualizer-container" className="lg:col-span-3">
+          <div id="visualizer-container" className="lg:col-span-3 space-y-6">
             {error ? (
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+              <Card className="bg-white/90 border border-slate-200 shadow-md">
                 <CardContent className="p-6">
-                  <p className="text-red-500 text-center">Please fix the input data to view the visualization.</p>
+                  <p className="text-red-500 text-center font-medium">Please fix the input data to view the visualization.</p>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center text-xl">
-                      <Play className="h-5 w-5 mr-2" />
-                      {algorithmInfo?.name || 'Algorithm Visualization'}
-                    </CardTitle>
-                    <Badge variant="outline" className="px-3 py-1">
-                      Interactive
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <AlgorithmVisualizer
-                    algorithm={selectedAlgorithm}
-                    data={currentData}
-                    onStepChange={(step) => {
-                      console.log('Current step:', step);
-                    }}
-                  />
-                </CardContent>
-                {!(
-                  algorithmCategories.graph.algorithms[selectedAlgorithm] ||
-                  algorithmCategories.tree.algorithms[selectedAlgorithm] ||
-                  selectedAlgorithm === 'coin-change'
-                ) && (
-                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mt-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <RefreshCw className="h-5 w-5 mr-2" />
-                        Data Controls
+              <>
+                {/* Main Visualizer Card */}
+                <Card className="bg-white/90 border border-slate-200/80 shadow-xl rounded-2xl overflow-hidden">
+                  <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-4 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center text-lg sm:text-xl font-bold text-slate-800">
+                        <Play className="h-5 w-5 mr-2 text-blue-500 fill-blue-500/25" />
+                        {algorithmInfo?.name || 'Algorithm Visualization'}
                       </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block text-gray-700">Enter Data (comma-separated):</label>
-                        <Input
-                          value={inputData}
-                          onChange={handleDataChange}
-                          placeholder="e.g., 64,34,25,12,22,11,90"
-                          className={error ? 'border-red-500' : ''}
-                        />
-                        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-                      </div>
-                      <Button onClick={generateRandomData} className="w-full bg-green-600 hover:bg-green-700">
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Generate Random Data
-                      </Button>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block text-gray-700">Current Data:</label>
-                        <div className="text-sm bg-gray-100 p-3 rounded-lg border">
-                          <code className="font-mono">[{currentData.join(', ')}]</code>
+                      <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold bg-blue-100/55 text-blue-700 hover:bg-blue-100/55">
+                        Interactive Sandbox
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-8">
+                    <AlgorithmVisualizer
+                      algorithm={selectedAlgorithm}
+                      data={currentData}
+                      onStepChange={(step) => {
+                        console.log('Current step:', step);
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Secondary Panels Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Data Controls Card */}
+                  {!(
+                    algorithmCategories.graph.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.graph.algorithms] ||
+                    algorithmCategories.tree.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.tree.algorithms] ||
+                    selectedAlgorithm === 'coin-change'
+                  ) && (
+                    <Card className="bg-white/90 border border-slate-200/80 shadow-lg rounded-2xl">
+                      <CardHeader className="border-b border-slate-100/60 p-4 sm:p-5">
+                        <CardTitle className="flex items-center text-base sm:text-lg font-bold text-slate-800">
+                          <RefreshCw className="h-4.5 w-4.5 mr-2 text-emerald-500" />
+                          Data Controls
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-6 space-y-4">
+                        <div>
+                          <label className="text-xs font-semibold mb-2 block text-slate-500 uppercase tracking-wider">Enter Data (comma-separated):</label>
+                          <Input
+                            value={inputData}
+                            onChange={handleDataChange}
+                            placeholder="e.g., 64,34,25,12,22,11,90"
+                            className={`rounded-xl border-slate-200 py-5 ${error ? 'border-red-500 focus-visible:ring-red-500' : 'focus-visible:ring-blue-500'}`}
+                          />
+                          {error && <p className="text-red-500 text-xs mt-1.5">{error}</p>}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-                {algorithmInfo && (
-                  <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg mt-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Info className="h-5 w-5 mr-2" />
-                        Algorithm Info
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <span className="font-medium text-gray-900">Time Complexity:</span>
-                          <code className="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
-                            {algorithmInfo.complexity.time}
-                          </code>
+                        <Button onClick={generateRandomData} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-5 text-sm font-semibold shadow-lg shadow-emerald-600/10 transition-transform hover:scale-[1.01]">
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Generate Random Data
+                        </Button>
+                        <div>
+                          <label className="text-xs font-semibold mb-2 block text-slate-500 uppercase tracking-wider">Current Array State:</label>
+                          <div className="text-sm bg-slate-950 text-slate-200 p-3 rounded-xl border border-slate-900 shadow-inner">
+                            <code className="font-mono text-cyan-400">[{currentData.join(', ')}]</code>
+                          </div>
                         </div>
-                        <div className="bg-purple-50 p-3 rounded-lg">
-                          <span className="font-medium text-gray-900">Space Complexity:</span>
-                          <code className="ml-2 bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">
-                            {algorithmInfo.complexity.space}
-                          </code>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Algorithm Info Card */}
+                  {algorithmInfo && (
+                    <Card className={`bg-white/90 border border-slate-200/80 shadow-lg rounded-2xl ${
+                      (
+                        algorithmCategories.graph.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.graph.algorithms] ||
+                        algorithmCategories.tree.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.tree.algorithms] ||
+                        selectedAlgorithm === 'coin-change'
+                      ) ? 'md:col-span-2' : ''
+                    }`}>
+                      <CardHeader className="border-b border-slate-100/60 p-4 sm:p-5">
+                        <CardTitle className="flex items-center text-base sm:text-lg font-bold text-slate-800">
+                          <Info className="h-4.5 w-4.5 mr-2 text-blue-500" />
+                          Algorithm Parameters
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-6 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-blue-50/50 border border-blue-100 p-3.5 rounded-xl">
+                            <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Time Complexity</span>
+                            <code className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-sm font-bold font-mono">
+                              {algorithmInfo.complexity.time}
+                            </code>
+                          </div>
+                          <div className="bg-purple-50/50 border border-purple-100 p-3.5 rounded-xl">
+                            <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Space Complexity</span>
+                            <code className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-sm font-bold font-mono">
+                              {algorithmInfo.complexity.space}
+                            </code>
+                          </div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <span className="font-medium text-gray-900">Description:</span>
-                          <p className="text-sm text-gray-600 mt-1">{algorithmInfo.description}</p>
+                        <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl">
+                          <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Overview Description</span>
+                          <p className="text-sm text-slate-600 leading-relaxed font-medium">{algorithmInfo.description}</p>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </Card>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>

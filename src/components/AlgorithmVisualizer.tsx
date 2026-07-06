@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, RotateCcw, SkipForward } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, Zap } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
 // Mapping of algorithms to their visualization GIFs
@@ -1091,93 +1091,156 @@ const AlgorithmVisualizer: React.FC<VisualizerProps> = ({ algorithm, data, onSte
       onStepChange?.(nextStep);
     }
   };
-
-  const getBarColor = (index: number) => {
-    const step = steps[currentStep];
-    if (!step) return 'bg-blue-500';
-    
-    if (step.found === index) return 'bg-green-500';
-    if (step.comparing?.includes(index)) return 'bg-red-500';
-    if (step.pivot === index) return 'bg-purple-500';
-    if (step.range && (index < step.range[0] || index > step.range[1])) return 'bg-gray-300';
-    
-    return 'bg-blue-500';
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Algorithm Visualization</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {/* Controls for bar graph algorithms */}
-          {isBarGraphAlgorithm && (
-            <>
-              <div className="flex gap-2">
-                <Button onClick={handlePlay}>
-                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                </Button>
-                <Button onClick={handleStep} variant="outline">
-                  <SkipForward className="h-4 w-4" />
-                </Button>
-                <Button onClick={handleReset} variant="outline">
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Speed: {1100 - speed[0]}ms
-                </label>
-                <Slider
-                  value={speed}
-                  onValueChange={setSpeed}
-                  max={1000}
-                  min={100}
-                  step={100}
-                  className="w-full"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Visualization Area */}
-          <div className="bg-white p-8 rounded-lg border">
-            {isBarGraphAlgorithm ? (
-              <div className="flex items-end justify-center space-x-2 h-64">
-                {array.map((value, index) => (
-                  <div key={index} className="flex flex-col items-center">
-                    <div className="text-sm font-medium mb-2">{value}</div>
-                    <div
-                      className={`w-12 transition-all duration-300 ${getBarColor(index)}`}
-                      style={{ height: `${Math.max((value / Math.max(...array, 1)) * 200, 20)}px` }}
-                    />
-                    <div className="text-xs mt-1 text-gray-500">{index}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex justify-center items-center h-64">
-                <img
-                  src={algorithmGifs[algorithm]}
-                  alt={`${algorithm} visualization`}
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
-            )}
+    <div className="space-y-6">
+      {/* Controls and Stats Panel - Styled in clean light-mode dashboard style to match parent and prevent white-on-white buttons */}
+      {isBarGraphAlgorithm && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 border border-slate-200 p-4 rounded-xl text-slate-800 shadow-sm">
+          <div className="flex items-center justify-between md:justify-start gap-4">
+            <div className="flex gap-2">
+              <Button 
+                onClick={handlePlay} 
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/10 w-12 h-10 flex items-center justify-center rounded-lg transition-transform hover:scale-105"
+              >
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              </Button>
+              <Button 
+                onClick={handleStep} 
+                className="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 w-12 h-10 flex items-center justify-center rounded-lg transition-transform hover:scale-105 shadow-sm"
+              >
+                <SkipForward className="h-5 w-5" />
+              </Button>
+              <Button 
+                onClick={handleReset} 
+                className="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 w-12 h-10 flex items-center justify-center rounded-lg transition-transform hover:scale-105 shadow-sm"
+              >
+                <RotateCcw className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            <div className="text-sm font-semibold text-slate-700 bg-white px-3 py-1.5 rounded-md border border-slate-200 shadow-sm">
+              Step <span className="text-blue-600 font-bold">{currentStep + 1}</span> of <span className="font-semibold text-slate-400">{steps.length || 1}</span>
+            </div>
           </div>
 
-          {/* Step Description for bar graph algorithms */}
-          {isBarGraphAlgorithm && (
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-gray-700">
+          <div className="flex flex-col justify-center">
+            <div className="flex justify-between items-center mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <span>Playback Speed</span>
+              <span className="text-blue-600 font-medium">{1100 - speed[0]}ms</span>
+            </div>
+            <Slider
+              value={speed}
+              onValueChange={setSpeed}
+              max={1000}
+              min={100}
+              step={100}
+              className="w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Visualization Area */}
+      <div className="bg-slate-950 p-4 sm:p-8 rounded-2xl border border-slate-850 shadow-2xl relative overflow-hidden">
+        {/* Decorative Grid Lines Background */}
+        {isBarGraphAlgorithm && (
+          <div className="absolute inset-x-0 bottom-[40px] top-[40px] flex flex-col justify-between pointer-events-none opacity-5 px-6">
+            <div className="border-b border-dashed border-slate-100 w-full" />
+            <div className="border-b border-dashed border-slate-100 w-full" />
+            <div className="border-b border-dashed border-slate-100 w-full" />
+          </div>
+        )}
+
+        {isBarGraphAlgorithm ? (
+          <div className="flex items-end justify-center gap-1.5 sm:gap-3 h-72 px-1 sm:px-4 relative z-10">
+            {array.map((value, index) => {
+              const step = steps[currentStep];
+              const isComparing = step?.comparing?.includes(index);
+              const isFound = step?.found === index;
+              const isPivot = step?.pivot === index;
+              const isOutOfRange = step?.range && (index < step.range[0] || index > step.range[1]);
+
+              let barColorClasses = "from-blue-600/40 to-blue-500 border-blue-400/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]";
+              if (isFound) {
+                barColorClasses = "from-emerald-600/40 to-emerald-500 border-emerald-400/50 shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-105";
+              } else if (isComparing) {
+                barColorClasses = "from-rose-600/40 to-rose-500 border-rose-400/50 shadow-[0_0_20px_rgba(244,63,94,0.4)] scale-105";
+              } else if (isPivot) {
+                barColorClasses = "from-violet-600/40 to-violet-500 border-violet-400/50 shadow-[0_0_20px_rgba(139,92,246,0.4)] scale-105";
+              } else if (isOutOfRange) {
+                barColorClasses = "from-slate-800/20 to-slate-800/40 border-slate-700/10 opacity-20";
+              }
+
+              return (
+                <div key={index} className="flex-1 flex flex-col items-center max-w-[3.5rem] min-w-[14px] group">
+                  {/* Value Label */}
+                  <div className={`text-[10px] sm:text-xs font-semibold mb-2 transition-all duration-300 ${
+                    isComparing ? 'text-rose-400 scale-110 font-bold' : 
+                    isFound ? 'text-emerald-400 scale-110 font-bold' : 
+                    isPivot ? 'text-violet-400 scale-110 font-bold' : 'text-slate-400'
+                  }`}>
+                    {value}
+                  </div>
+                  
+                  {/* Bar */}
+                  <div
+                    className={`w-full transition-all duration-300 rounded-t-lg bg-gradient-to-t border ${barColorClasses}`}
+                    style={{
+                      height: `${Math.max((value / Math.max(...array, 1)) * 180, 16)}px`
+                    }}
+                  />
+                  
+                  {/* Index Label */}
+                  <div className={`text-[9px] sm:text-xs mt-1.5 font-medium transition-all duration-300 ${
+                    isComparing ? 'text-rose-400 font-bold' : 
+                    isFound ? 'text-emerald-400 font-bold' : 
+                    isPivot ? 'text-violet-400 font-bold' : 'text-slate-500'
+                  }`}>
+                    {index}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-72 bg-slate-905 p-4 rounded-xl border border-slate-800/50">
+            <img
+              src={algorithmGifs[algorithm]}
+              alt={`${algorithm} visualization`}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-xl"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Step Description and Progress */}
+      {isBarGraphAlgorithm && (
+        <div className="space-y-3">
+          {/* Progress Bar */}
+          {steps.length > 1 && (
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+              <div 
+                className="bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 h-full transition-all duration-300"
+                style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+              />
+            </div>
+          )}
+          
+          {/* Description Block */}
+          <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl shadow-sm flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-100/50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
+              <Zap className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Current Operation</h4>
+              <p className="text-sm font-semibold text-slate-700">
                 {steps[currentStep]?.description || "Algorithm ready to start"}
               </p>
             </div>
-          )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
 
