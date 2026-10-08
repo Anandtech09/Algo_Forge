@@ -25,3 +25,5 @@ env
 *.sw?
 
 backend/.venv
+__pycache__/
+*.pyc

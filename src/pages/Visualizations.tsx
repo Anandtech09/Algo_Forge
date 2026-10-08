@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Play, RefreshCw, Settings, Info } from 'lucide-react';
+import { ArrowLeft, Play, RefreshCw, Settings, Info, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,10 +23,16 @@ const Visualizations: React.FC = () => {
 
   // Validate and update data when input changes
   const handleDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputData(e.target.value);
+    const val = e.target.value;
+    setInputData(val);
     try {
-      const parsed = e.target.value.split(',').map(num => {
-        const n = parseInt(num.trim());
+      if (!val.trim()) {
+        throw new Error('Input cannot be empty');
+      }
+      const parsed = val.split(',').map(num => {
+        const trimmed = num.trim();
+        if (trimmed === '') throw new Error('Empty element');
+        const n = parseInt(trimmed, 10);
         if (isNaN(n)) throw new Error('Invalid number');
         return n;
       });
@@ -352,118 +358,114 @@ const Visualizations: React.FC = () => {
 
           {/* Main Visualization Area */}
           <div id="visualizer-container" className="lg:col-span-3 space-y-6">
-            {error ? (
-              <Card className="bg-white/90 border border-slate-200 shadow-md">
-                <CardContent className="p-6">
-                  <p className="text-red-500 text-center font-medium">Please fix the input data to view the visualization.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                {/* Main Visualizer Card */}
-                <Card className="bg-white/90 border border-slate-200/80 shadow-xl rounded-2xl overflow-hidden">
-                  <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-4 sm:p-6">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center text-lg sm:text-xl font-bold text-slate-800">
-                        <Play className="h-5 w-5 mr-2 text-blue-500 fill-blue-500/25" />
-                        {algorithmInfo?.name || 'Algorithm Visualization'}
-                      </CardTitle>
-                      <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold bg-blue-100/55 text-blue-700 hover:bg-blue-100/55">
-                        Interactive Sandbox
-                      </Badge>
-                    </div>
+            {/* Main Visualizer Card */}
+            <Card className="bg-white/90 border border-slate-200/80 shadow-xl rounded-2xl overflow-hidden">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center text-lg sm:text-xl font-bold text-slate-800">
+                    <Play className="h-5 w-5 mr-2 text-blue-500 fill-blue-500/25" />
+                    {algorithmInfo?.name || 'Algorithm Visualization'}
+                  </CardTitle>
+                  <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold bg-blue-100/55 text-blue-700 hover:bg-blue-100/55">
+                    Interactive Sandbox
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-8">
+                {error && (
+                  <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-medium flex items-center gap-2.5 shadow-sm">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                    <span>Data input is incomplete or invalid. Please update the numbers in Data Controls below.</span>
+                  </div>
+                )}
+                <AlgorithmVisualizer
+                  algorithm={selectedAlgorithm}
+                  data={currentData}
+                  onStepChange={(step) => {
+                    console.log('Current step:', step);
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Secondary Panels Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Data Controls Card */}
+              {!(
+                algorithmCategories.graph.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.graph.algorithms] ||
+                algorithmCategories.tree.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.tree.algorithms] ||
+                selectedAlgorithm === 'coin-change'
+              ) && (
+                <Card className="bg-white/90 border border-slate-200/80 shadow-lg rounded-2xl">
+                  <CardHeader className="border-b border-slate-100/60 p-4 sm:p-5">
+                    <CardTitle className="flex items-center text-base sm:text-lg font-bold text-slate-800">
+                      <RefreshCw className="h-4.5 w-4.5 mr-2 text-emerald-500" />
+                      Data Controls
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-4 sm:p-8">
-                    <AlgorithmVisualizer
-                      algorithm={selectedAlgorithm}
-                      data={currentData}
-                      onStepChange={(step) => {
-                        console.log('Current step:', step);
-                      }}
-                    />
+                  <CardContent className="p-4 sm:p-6 space-y-4">
+                    <div>
+                      <label className="text-xs font-semibold mb-2 block text-slate-500 uppercase tracking-wider">Enter Data (comma-separated):</label>
+                      <Input
+                        value={inputData}
+                        onChange={handleDataChange}
+                        placeholder="e.g., 64,34,25,12,22,11,90"
+                        className={`rounded-xl border-slate-200 py-5 ${error ? 'border-red-500 focus-visible:ring-red-500' : 'focus-visible:ring-blue-500'}`}
+                      />
+                      {error && <p className="text-red-500 text-xs mt-1.5 font-medium">{error}</p>}
+                    </div>
+                    <Button onClick={generateRandomData} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-5 text-sm font-semibold shadow-lg shadow-emerald-600/10 transition-transform hover:scale-[1.01]">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Generate Random Data
+                    </Button>
+                    <div>
+                      <label className="text-xs font-semibold mb-2 block text-slate-500 uppercase tracking-wider">Current Array State:</label>
+                      <div className="text-sm bg-slate-950 text-slate-200 p-3 rounded-xl border border-slate-900 shadow-inner">
+                        <code className="font-mono text-cyan-400">[{currentData.join(', ')}]</code>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
+              )}
 
-                {/* Secondary Panels Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Data Controls Card */}
-                  {!(
+              {/* Algorithm Info Card */}
+              {algorithmInfo && (
+                <Card className={`bg-white/90 border border-slate-200/80 shadow-lg rounded-2xl ${
+                  (
                     algorithmCategories.graph.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.graph.algorithms] ||
                     algorithmCategories.tree.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.tree.algorithms] ||
                     selectedAlgorithm === 'coin-change'
-                  ) && (
-                    <Card className="bg-white/90 border border-slate-200/80 shadow-lg rounded-2xl">
-                      <CardHeader className="border-b border-slate-100/60 p-4 sm:p-5">
-                        <CardTitle className="flex items-center text-base sm:text-lg font-bold text-slate-800">
-                          <RefreshCw className="h-4.5 w-4.5 mr-2 text-emerald-500" />
-                          Data Controls
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 sm:p-6 space-y-4">
-                        <div>
-                          <label className="text-xs font-semibold mb-2 block text-slate-500 uppercase tracking-wider">Enter Data (comma-separated):</label>
-                          <Input
-                            value={inputData}
-                            onChange={handleDataChange}
-                            placeholder="e.g., 64,34,25,12,22,11,90"
-                            className={`rounded-xl border-slate-200 py-5 ${error ? 'border-red-500 focus-visible:ring-red-500' : 'focus-visible:ring-blue-500'}`}
-                          />
-                          {error && <p className="text-red-500 text-xs mt-1.5">{error}</p>}
-                        </div>
-                        <Button onClick={generateRandomData} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-5 text-sm font-semibold shadow-lg shadow-emerald-600/10 transition-transform hover:scale-[1.01]">
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Generate Random Data
-                        </Button>
-                        <div>
-                          <label className="text-xs font-semibold mb-2 block text-slate-500 uppercase tracking-wider">Current Array State:</label>
-                          <div className="text-sm bg-slate-950 text-slate-200 p-3 rounded-xl border border-slate-900 shadow-inner">
-                            <code className="font-mono text-cyan-400">[{currentData.join(', ')}]</code>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Algorithm Info Card */}
-                  {algorithmInfo && (
-                    <Card className={`bg-white/90 border border-slate-200/80 shadow-lg rounded-2xl ${
-                      (
-                        algorithmCategories.graph.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.graph.algorithms] ||
-                        algorithmCategories.tree.algorithms[selectedAlgorithm as keyof typeof algorithmCategories.tree.algorithms] ||
-                        selectedAlgorithm === 'coin-change'
-                      ) ? 'md:col-span-2' : ''
-                    }`}>
-                      <CardHeader className="border-b border-slate-100/60 p-4 sm:p-5">
-                        <CardTitle className="flex items-center text-base sm:text-lg font-bold text-slate-800">
-                          <Info className="h-4.5 w-4.5 mr-2 text-blue-500" />
-                          Algorithm Parameters
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4 sm:p-6 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-blue-50/50 border border-blue-100 p-3.5 rounded-xl">
-                            <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Time Complexity</span>
-                            <code className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-sm font-bold font-mono">
-                              {algorithmInfo.complexity.time}
-                            </code>
-                          </div>
-                          <div className="bg-purple-50/50 border border-purple-100 p-3.5 rounded-xl">
-                            <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Space Complexity</span>
-                            <code className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-sm font-bold font-mono">
-                              {algorithmInfo.complexity.space}
-                            </code>
-                          </div>
-                        </div>
-                        <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl">
-                          <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Overview Description</span>
-                          <p className="text-sm text-slate-600 leading-relaxed font-medium">{algorithmInfo.description}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </>
-            )}
+                  ) ? 'md:col-span-2' : ''
+                }`}>
+                  <CardHeader className="border-b border-slate-100/60 p-4 sm:p-5">
+                    <CardTitle className="flex items-center text-base sm:text-lg font-bold text-slate-800">
+                      <Info className="h-4.5 w-4.5 mr-2 text-blue-500" />
+                      Algorithm Parameters
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-blue-50/50 border border-blue-100 p-3.5 rounded-xl">
+                        <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Time Complexity</span>
+                        <code className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-sm font-bold font-mono">
+                          {algorithmInfo.complexity.time}
+                        </code>
+                      </div>
+                      <div className="bg-purple-50/50 border border-purple-100 p-3.5 rounded-xl">
+                        <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Space Complexity</span>
+                        <code className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-sm font-bold font-mono">
+                          {algorithmInfo.complexity.space}
+                        </code>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 p-3.5 rounded-xl">
+                      <span className="text-xs font-semibold text-slate-450 uppercase tracking-wider block mb-1">Overview Description</span>
+                      <p className="text-sm text-slate-600 leading-relaxed font-medium">{algorithmInfo.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       </div>

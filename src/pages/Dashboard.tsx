@@ -545,7 +545,7 @@ const Dashboard: React.FC = () => {
             <div>
               <h4 className="text-xs font-bold text-white uppercase tracking-widest mb-3.5">Engineered with</h4>
               <p className="text-xs leading-relaxed text-slate-500 font-medium">
-                React, TypeScript, Tailwind CSS, FastAPI, and powered by Groq (Llama-3.3-70b-versatile) & OpenRouter API models.
+                React, TypeScript, Tailwind CSS, FastAPI, and powered by Groq & OpenRouter API models.
               </p>
             </div>
           </div>
